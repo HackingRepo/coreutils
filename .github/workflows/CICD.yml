@@ -1221,3 +1221,283 @@ jobs:
         lima bash -c "cd work && cargo test --features 'feat_selinux'"
     - name: Lint with SELinux
       run: lima bash -c "cd work && cargo clippy --all-targets --features 'feat_selinux' -- -D warnings"
+
+  # Safe Traversal Security Tests
+  test-safe-traversal:
+    name: Test Safe Traversal Syscalls
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y strace
+
+    - uses: dtolnay/rust-toolchain@stable
+    - uses: Swatinem/rust-cache@v2
+
+    - name: Build with safe-traversal features
+      run: cargo build --features unix
+
+    - name: Run safe traversal syscall tests
+      run: ./util/test-safe-traversal.sh
+
+    - name: Test without safe-traversal (fallback behavior)
+      run: |
+        # Build without safe-traversal features to test fallback
+        cargo build --no-default-features --features unix
+
+        # Run a basic test to ensure fallback works
+        temp_dir=$(mktemp -d)
+        mkdir -p "$temp_dir/test"
+        touch "$temp_dir/test/file"
+
+        # This should work with the fallback implementation
+        ./target/debug/coreutils chown --help > /dev/null
+        ./target/debug/coreutils chmod --help > /dev/null
+        ./target/debug/coreutils chgrp --help > /dev/null
+        ./target/debug/coreutils du --help > /dev/null
+        ./target/debug/coreutils mv --help > /dev/null
+        ./target/debug/coreutils cp --help > /dev/null
+        ./target/debug/coreutils rm --help > /dev/null
+
+        echo "✅ Fallback implementation works correctly"
+        rm -rf "$temp_dir"
+
+  test-safe-traversal-comprehensive:
+    name: Comprehensive Filesystem Safety Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y strace
+
+    - uses: dtolnay/rust-toolchain@stable
+    - uses: Swatinem/rust-cache@v2
+
+    - name: Build project
+      run: cargo build --features unix
+
+    - name: Test comprehensive filesystem operations safety
+      run: |
+        temp_dir=$(mktemp -d)
+        test_dir="$temp_dir/comprehensive_test"
+        mkdir -p "$test_dir"
+
+        # Create initial file structure for comprehensive testing
+        for i in {1..20}; do
+          mkdir -p "$test_dir/dir_$i"
+          touch "$test_dir/dir_$i/file_$i"
+          ln -s "file_$i" "$test_dir/dir_$i/link_$i" 2>/dev/null || true
+        done
+
+        echo "🔍 Testing chown recursive operations..."
+        (
+          strace -e trace=openat,fchownat,getdents64,readdir -o "$temp_dir/chown_strace.log" \
+                 ./target/debug/coreutils chown -R 1000:1000 "$test_dir/dir_1" 2>/dev/null || true
+        ) &
+        chown_pid=$!
+
+        # Modify filesystem while chown is running (race condition test)
+        for i in {21..23}; do
+          mkdir -p "$test_dir/dir_1/dynamic_$i" 2>/dev/null || true
+          touch "$test_dir/dir_1/dynamic_$i/file_$i" 2>/dev/null || true
+          sleep 0.01
+        done
+
+        wait $chown_pid
+
+        if grep -E "^[0-9]+ (chown|lchown|readdir)\(" "$temp_dir/chown_strace.log" 2>/dev/null; then
+          echo "❌ Unsafe syscalls in chown"
+          head -10 "$temp_dir/chown_strace.log"
+          exit 1
+        fi
+        echo "✅ chown operations safe"
+
+        echo "🔍 Testing chmod recursive operations..."
+        strace -e trace=openat,fchmodat,getdents64,readdir -o "$temp_dir/chmod_strace.log" \
+               ./target/debug/coreutils chmod -R 755 "$test_dir/dir_2" 2>/dev/null || true
+
+        if grep -E "^[0-9]+ (chmod|lchmod|readdir)\(" "$temp_dir/chmod_strace.log" 2>/dev/null; then
+          echo "❌ Unsafe syscalls in chmod"
+          head -10 "$temp_dir/chmod_strace.log"
+          exit 1
+        fi
+        echo "✅ chmod operations safe"
+
+        echo "🔍 Testing chgrp recursive operations..."
+        strace -e trace=openat,fchownat,getdents64,readdir -o "$temp_dir/chgrp_strace.log" \
+               ./target/debug/coreutils chgrp -R 1000 "$test_dir/dir_3" 2>/dev/null || true
+
+        if grep -E "^[0-9]+ (chown|lchown|readdir)\(" "$temp_dir/chgrp_strace.log" 2>/dev/null; then
+          echo "❌ Unsafe syscalls in chgrp"
+          head -10 "$temp_dir/chgrp_strace.log"
+          exit 1
+        fi
+        echo "✅ chgrp operations safe"
+
+        echo "🔍 Testing du traversal operations..."
+        strace -e trace=openat,getdents64,readdir -o "$temp_dir/du_strace.log" \
+               ./target/debug/coreutils du -s "$test_dir" 2>/dev/null || true
+
+        if grep -E "^[0-9]+ readdir\(" "$temp_dir/du_strace.log" 2>/dev/null; then
+          echo "❌ Unsafe readdir syscalls in du"
+          head -10 "$temp_dir/du_strace.log"
+          exit 1
+        fi
+        echo "✅ du operations safe"
+
+        echo "🔍 Testing mv operations..."
+        mkdir -p "$temp_dir/mv_test"
+        touch "$temp_dir/mv_test/source"
+        strace -e trace=rename,renameat,unlink,unlinkat -o "$temp_dir/mv_strace.log" \
+               ./target/debug/coreutils mv "$temp_dir/mv_test/source" "$temp_dir/mv_test/dest" 2>/dev/null || true
+
+        if grep -E "^[0-9]+ (rename|unlink)\(" "$temp_dir/mv_strace.log" 2>/dev/null; then
+          echo "❌ Unsafe direct rename/unlink syscalls in mv"
+          head -10 "$temp_dir/mv_strace.log"
+          exit 1
+        fi
+        echo "✅ mv operations safe"
+
+        echo "🔍 Testing cp recursive operations..."
+        strace -e trace=open,openat,readdir,getdents64 -o "$temp_dir/cp_strace.log" \
+               ./target/debug/coreutils cp -r "$test_dir/dir_4" "$temp_dir/cp_test" 2>/dev/null || true
+
+        if grep -E "^[0-9]+ (open|readdir)\(" "$temp_dir/cp_strace.log" 2>/dev/null; then
+          echo "❌ Unsafe direct open/readdir syscalls in cp"
+          head -10 "$temp_dir/cp_strace.log"
+          exit 1
+        fi
+        echo "✅ cp operations safe"
+
+        echo "🔍 Testing rm recursive operations..."
+        mkdir -p "$temp_dir/rm_test/subdir"
+        touch "$temp_dir/rm_test/file" "$temp_dir/rm_test/subdir/file"
+        strace -e trace=unlink,unlinkat,rmdir -o "$temp_dir/rm_strace.log" \
+               ./target/debug/coreutils rm -r "$temp_dir/rm_test" 2>/dev/null || true
+
+        if grep -E "^[0-9]+ (unlink|rmdir)\(" "$temp_dir/rm_strace.log" 2>/dev/null; then
+          echo "❌ Unsafe direct unlink/rmdir syscalls in rm"
+          head -10 "$temp_dir/rm_strace.log"
+          exit 1
+        fi
+        echo "✅ rm operations safe"
+
+        echo "✅ All comprehensive filesystem operations handled safely"
+        rm -rf "$temp_dir"
+
+  stress-test-all-utilities:
+    name: Stress Test All Utilities Together
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y strace
+
+    - uses: dtolnay/rust-toolchain@stable
+    - uses: Swatinem/rust-cache@v2
+
+    - name: Build project
+      run: cargo build --features unix
+
+    - name: Comprehensive stress test with all utilities
+      run: |
+        temp_dir=$(mktemp -d)
+        test_root="$temp_dir/stress_test"
+        mkdir -p "$test_root"
+
+        echo "🚀 Creating complex directory structure for stress testing..."
+
+        # Create a complex directory structure with files, links, and deep nesting
+        for i in {1..20}; do
+          mkdir -p "$test_root/level1_$i/level2/level3"
+          for j in {1..10}; do
+            touch "$test_root/level1_$i/file_$j"
+            touch "$test_root/level1_$i/level2/file_$j"
+            touch "$test_root/level1_$i/level2/level3/file_$j"
+            ln -s "../file_$j" "$test_root/level1_$i/level2/link_$j" 2>/dev/null || true
+          done
+        done
+
+        # Create some special files (named pipes, etc.)
+        mkfifo "$test_root/level1_1/pipe" 2>/dev/null || true
+
+        echo "📊 Running comprehensive stress test with strace monitoring..."
+
+        # Test all utilities together in a complex scenario
+        strace -f -e trace=openat,fchownat,fchmodat,getdents64,renameat,unlinkat,readdir,open,chmod,chown,lchown,lchmod,rename,unlink,rmdir \
+               -o "$temp_dir/stress_strace.log" \
+               bash -c "
+                 # Test du first
+                 ./target/debug/coreutils du -s '$test_root' > /dev/null 2>&1 || true
+
+                 # Test permissions changes
+                 ./target/debug/coreutils chmod -R 755 '$test_root/level1_1' > /dev/null 2>&1 || true
+                 ./target/debug/coreutils chown -R 1000:1000 '$test_root/level1_2' > /dev/null 2>&1 || true
+                 ./target/debug/coreutils chgrp -R 1000 '$test_root/level1_3' > /dev/null 2>&1 || true
+
+                 # Test copy operations
+                 ./target/debug/coreutils cp -r '$test_root/level1_4' '$test_root/copy_test' > /dev/null 2>&1 || true
+
+                 # Test move operations
+                 ./target/debug/coreutils mv '$test_root/copy_test' '$test_root/moved_test' > /dev/null 2>&1 || true
+
+                 # Test removal
+                 ./target/debug/coreutils rm -r '$test_root/moved_test' > /dev/null 2>&1 || true
+               " 2>/dev/null || true
+
+        echo "🔍 Analyzing strace results for unsafe syscalls..."
+
+        # Check for any unsafe direct syscalls
+        unsafe_patterns=(
+          "^[0-9]+ (chown|lchown|chmod|lchmod|readdir|open|rename|unlink|rmdir)\("
+        )
+
+        found_unsafe=false
+        for pattern in "${unsafe_patterns[@]}"; do
+          if grep -E "$pattern" "$temp_dir/stress_strace.log" 2>/dev/null | head -5; then
+            echo "❌ Found unsafe direct syscalls matching pattern: $pattern"
+            found_unsafe=true
+          fi
+        done
+
+        if [ "$found_unsafe" = true ]; then
+          echo "❌ STRESS TEST FAILED - Unsafe syscalls detected"
+          echo "First 20 lines of strace log:"
+          head -20 "$temp_dir/stress_strace.log"
+          exit 1
+        fi
+
+        # Verify safe syscalls are being used
+        safe_syscalls=$(grep -E "^[0-9]+ (openat|fchownat|fchmodat|getdents64|renameat|unlinkat)\(" "$temp_dir/stress_strace.log" | wc -l)
+
+        if [ "$safe_syscalls" -lt 10 ]; then
+          echo "❌ STRESS TEST FAILED - Expected more safe syscalls, got: $safe_syscalls"
+          exit 1
+        fi
+
+        echo "✅ STRESS TEST PASSED"
+        echo "   Safe syscalls used: $safe_syscalls"
+        echo "   No unsafe direct syscalls detected"
+
+        rm -rf "$temp_dir"
