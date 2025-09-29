@@ -473,17 +473,19 @@ fn safe_du(
         };
 
         // Check excludes
-        for pattern in &options.excludes {
-            if pattern.matches(&this_stat.path.to_string_lossy())
-                || pattern.matches(&entry_name.to_string_lossy())
-            {
-                if options.verbose {
-                    println!(
-                        "{}",
-                        translate!("du-verbose-ignored", "path" => this_stat.path.quote())
-                    );
+        if !options.excludes.is_empty() {
+            let path_lossy = this_stat.path.to_string_lossy();
+            let name_lossy = entry_name.to_string_lossy();
+            for pattern in &options.excludes {
+                if pattern.matches(&path_lossy) || pattern.matches(&name_lossy) {
+                    if options.verbose {
+                        println!(
+                            "{}",
+                            translate!("du-verbose-ignored", "path" => this_stat.path.quote())
+                        );
+                    }
+                    continue 'file_loop;
                 }
-                continue 'file_loop;
             }
         }
 
@@ -627,22 +629,25 @@ fn du_regular(
                             }
 
                             // We have an exclude list
-                            for pattern in &options.excludes {
-                                // Look at all patterns with both short and long paths
-                                // if we have 'du foo' but search to exclude 'foo/bar'
-                                // we need the full path
-                                if pattern.matches(&this_stat.path.to_string_lossy())
-                                    || pattern.matches(&entry.file_name().into_string().unwrap())
-                                {
-                                    // if the directory is ignored, leave early
-                                    if options.verbose {
-                                        println!(
-                                            "{}",
-                                            translate!("du-verbose-ignored", "path" => this_stat.path.quote())
-                                        );
+                            if !options.excludes.is_empty() {
+                                let path_lossy = this_stat.path.to_string_lossy();
+                                for pattern in &options.excludes {
+                                    // Look at all patterns with both short and long paths
+                                    // if we have 'du foo' but search to exclude 'foo/bar'
+                                    // we need the full path
+                                    if pattern.matches(&path_lossy)
+                                        || pattern.matches(&entry.file_name().to_string_lossy())
+                                    {
+                                        // if the directory is ignored, leave early
+                                        if options.verbose {
+                                            println!(
+                                                "{}",
+                                                translate!("du-verbose-ignored", "path" => this_stat.path.quote())
+                                            );
+                                        }
+                                        // Go to the next file
+                                        continue 'file_loop;
                                     }
-                                    // Go to the next file
-                                    continue 'file_loop;
                                 }
                             }
 
