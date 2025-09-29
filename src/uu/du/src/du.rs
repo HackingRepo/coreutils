@@ -19,7 +19,7 @@ use std::os::unix::fs::MetadataExt;
 use std::os::windows::io::AsRawHandle;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use std::sync::mpsc;
+use std::sync::{Arc, mpsc};
 use std::thread;
 use thiserror::Error;
 use uucore::display::{Quotable, print_verbatim};
@@ -124,7 +124,7 @@ struct Stat {
     blocks: u64,
     inodes: u64,
     inode: Option<FileInfo>,
-    metadata: Metadata,
+    metadata: Arc<Metadata>,
 }
 
 impl Stat {
@@ -160,7 +160,7 @@ impl Stat {
             blocks,
             inodes: 1,
             inode: file_info,
-            metadata,
+            metadata: Arc::new(metadata),
         })
     }
 
@@ -194,7 +194,7 @@ impl Stat {
             blocks,
             inodes: 1,
             inode: file_info_option,
-            metadata: std_metadata,
+            metadata: Arc::new(std_metadata),
         })
     }
 }
@@ -334,7 +334,7 @@ fn safe_du(
                     blocks,
                     inodes: 1,
                     inode: file_info_option,
-                    metadata: std_metadata,
+                    metadata: Arc::new(std_metadata),
                 }
             }
             Err(e) => {
@@ -419,6 +419,9 @@ fn safe_du(
         }
     };
 
+    // Cache metadata reference to avoid cloning in the loop
+    let parent_metadata = &my_stat.metadata;
+
     'file_loop: for entry_name in entries {
         let entry_path = path.join(&entry_name);
 
@@ -458,28 +461,15 @@ fn safe_du(
 
         // For safe traversal, we need to handle stats differently
         // We can't use std::fs::Metadata since that requires the full path
-        let this_stat = if is_dir {
-            // For directories, recurse using safe_du
-            Stat {
-                path: entry_path.clone(),
-                size: 0,
-                blocks: entry_stat.st_blocks as u64,
-                inodes: 1,
-                inode: file_info,
-                // We need a fake metadata - create one from symlink_metadata of parent
-                // This is a workaround since we can't get real metadata without the full path
-                metadata: my_stat.metadata.clone(),
-            }
-        } else {
-            // For files
-            Stat {
-                path: entry_path.clone(),
-                size: entry_stat.st_size as u64,
-                blocks: entry_stat.st_blocks as u64,
-                inodes: 1,
-                inode: file_info,
-                metadata: my_stat.metadata.clone(),
-            }
+        let this_stat = Stat {
+            path: entry_path.clone(),
+            size: if is_dir { 0 } else { entry_stat.st_size as u64 },
+            blocks: entry_stat.st_blocks as u64,
+            inodes: 1,
+            inode: file_info,
+            // We need a fake metadata - reuse parent's Rc metadata (cheap clone)
+            // This is a workaround since we can't get real metadata without the full path
+            metadata: Arc::clone(parent_metadata),
         };
 
         // Check excludes
@@ -518,7 +508,7 @@ fn safe_du(
                 }
             }
 
-            let this_stat = safe_du(
+            let subdir_stat = safe_du(
                 &entry_path,
                 options,
                 depth + 1,
@@ -528,12 +518,12 @@ fn safe_du(
             )?;
 
             if !options.separate_dirs {
-                my_stat.size += this_stat.size;
-                my_stat.blocks += this_stat.blocks;
-                my_stat.inodes += this_stat.inodes;
+                my_stat.size += subdir_stat.size;
+                my_stat.blocks += subdir_stat.blocks;
+                my_stat.inodes += subdir_stat.inodes;
             }
             print_tx.send(Ok(StatPrintInfo {
-                stat: this_stat,
+                stat: subdir_stat,
                 depth: depth + 1,
             }))?;
         } else {
