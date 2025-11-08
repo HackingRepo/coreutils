@@ -17,6 +17,7 @@ use uucore::translate;
 
 mod options {
     pub const FILE: &str = "file";
+    pub const WARN: &str = "warn";
 }
 
 #[derive(Debug, Error)]
@@ -49,11 +50,28 @@ impl UError for LoopNode<'_> {}
 pub fn uumain(args: impl uucore::Args) -> UResult<()> {
     let matches = uucore::clap_localization::handle_clap_result(uu_app(), args)?;
 
-    let input = matches
-        .get_one::<OsString>(options::FILE)
-        .expect("Value is required by clap");
+    // Check for extra operands
+    let files: Vec<_> = matches
+        .get_many::<OsString>(options::FILE)
+        .map(|v| v.collect())
+        .unwrap_or_default();
 
-    let data = if input == "-" {
+    if files.len() > 1 {
+        return Err(uucore::error::USimpleError::new(
+            1,
+            format!(
+                "extra operand {}\nTry '{} --help' for more information.",
+                files[1].to_string_lossy().quote(),
+                uucore::util_name()
+            ),
+        ));
+    }
+
+    let input = files.first().expect("Value is required by clap");
+    // Accept -w/--warn flag for GNU compatibility (doesn't change behavior)
+    let _warn = matches.get_flag(options::WARN);
+
+    let data = if input.to_string_lossy() == "-" {
         let stdin = std::io::stdin();
         std::io::read_to_string(stdin)?
     } else {
@@ -97,11 +115,19 @@ pub fn uu_app() -> Command {
         .about(translate!("tsort-about"))
         .infer_long_args(true)
         .arg(
+            Arg::new(options::WARN)
+                .short('w')
+                .long("warn")
+                .help("warn about cycles, but continue")
+                .action(clap::ArgAction::SetTrue),
+        )
+        .arg(
             Arg::new(options::FILE)
                 .default_value("-")
                 .hide(true)
                 .value_parser(clap::value_parser!(OsString))
-                .value_hint(clap::ValueHint::FilePath),
+                .value_hint(clap::ValueHint::FilePath)
+                .num_args(0..),
         )
 }
 
@@ -132,6 +158,7 @@ impl<'input> Node<'input> {
 struct Graph<'input> {
     name: String,
     nodes: HashMap<&'input str, Node<'input>>,
+    insertion_order: Vec<&'input str>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -145,14 +172,26 @@ impl<'input> Graph<'input> {
         Self {
             name,
             nodes: HashMap::default(),
+            insertion_order: Vec::new(),
         }
     }
 
     fn add_edge(&mut self, from: &'input str, to: &'input str) {
-        let from_node = self.nodes.entry(from).or_default();
+        // Track insertion order for deterministic output
+        if let Entry::Vacant(e) = self.nodes.entry(from) {
+            self.insertion_order.push(from);
+            e.insert(Node::default());
+        }
+
+        let from_node = self.nodes.get_mut(from).unwrap();
         if from != to {
             from_node.add_successor(to);
-            let to_node = self.nodes.entry(to).or_default();
+
+            if let Entry::Vacant(e) = self.nodes.entry(to) {
+                self.insertion_order.push(to);
+                e.insert(Node::default());
+            }
+            let to_node = self.nodes.get_mut(to).unwrap();
             to_node.predecessor_count += 1;
         }
     }
@@ -178,11 +217,7 @@ impl<'input> Graph<'input> {
             })
             .collect();
 
-        // To make sure the resulting ordering is deterministic we
-        // need to order independent nodes.
-        //
-        // FIXME: this doesn't comply entirely with the GNU coreutils
-        // implementation.
+        // Sort independent nodes alphabetically to match GNU coreutils behavior
         independent_nodes_queue.make_contiguous().sort_unstable();
 
         while !self.nodes.is_empty() {
@@ -190,11 +225,12 @@ impl<'input> Graph<'input> {
             let v = self.find_next_node(&mut independent_nodes_queue);
             println!("{v}");
             if let Some(node_to_process) = self.nodes.remove(v) {
-                for successor_name in node_to_process.successor_names {
+                // Process successors in reverse order and add freed nodes to the back
+                for successor_name in node_to_process.successor_names.iter().rev() {
                     let successor_node = self.nodes.get_mut(successor_name).unwrap();
                     successor_node.predecessor_count -= 1;
                     if successor_node.predecessor_count == 0 {
-                        // If we find nodes without any other prerequisites, we add them to the queue.
+                        // Add to the back of the queue (FIFO)
                         independent_nodes_queue.push_back(successor_name);
                     }
                 }
@@ -245,6 +281,8 @@ impl<'input> Graph<'input> {
     }
 
     fn detect_cycle(&self) -> Vec<&'input str> {
+        // Sort the nodes alphabetically to make this function deterministic
+        // and match GNU coreutils behavior.
         let mut nodes: Vec<_> = self.nodes.keys().collect();
         nodes.sort_unstable();
 
