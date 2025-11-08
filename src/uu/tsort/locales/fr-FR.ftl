@@ -6,3 +6,6 @@ tsort-usage = tsort [OPTIONS] FILE
 tsort-error-is-dir = erreur de lecture : c'est un répertoire
 tsort-error-odd = l'entrée contient un nombre impair de jetons
 tsort-error-loop = l'entrée contient une boucle :
+tsort-error-extra-operand = opérande supplémentaire {$operand}
+tsort-try-help = Saisissez « {$command_name} --help » pour plus d'informations.
+tsort-option-warn = avertir des cycles, mais continuer
