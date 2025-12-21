@@ -12,7 +12,6 @@ use std::path::Path;
 use unicode_width::UnicodeWidthChar;
 use uucore::display::Quotable;
 use uucore::error::{FromIo, UResult, USimpleError};
-use uucore::format_usage;
 use uucore::translate;
 
 const TAB_WIDTH: usize = 8;
@@ -78,11 +77,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .override_usage(format_usage(&translate!("fold-usage")))
-        .about(translate!("fold-about"))
+    uucore::util_app("fold")
         .infer_long_args(true)
         .arg(
             Arg::new(options::BYTES)

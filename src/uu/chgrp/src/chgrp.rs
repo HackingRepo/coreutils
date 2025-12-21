@@ -8,7 +8,6 @@
 use uucore::display::Quotable;
 use uucore::entries;
 use uucore::error::{FromIo, UResult, USimpleError};
-use uucore::format_usage;
 use uucore::perms::{GidUidOwnerFilter, IfFrom, chown_base, options};
 use uucore::translate;
 
@@ -98,12 +97,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    let cmd = Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .about(translate!("chgrp-about"))
-        .override_usage(format_usage(&translate!("chgrp-usage")))
-        .infer_long_args(true);
-    uucore::clap_localization::configure_localized_command(cmd)
+    uucore::util_app("chgrp")
         .disable_help_flag(true)
         .arg(
             Arg::new(options::HELP)

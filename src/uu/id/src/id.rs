@@ -45,7 +45,7 @@ use uucore::line_ending::LineEnding;
 use uucore::translate;
 
 use uucore::process::{getegid, geteuid, getgid, getuid};
-use uucore::{format_usage, show_error};
+use uucore::show_error;
 
 macro_rules! cstr2cow {
     ($v:expr) => {
@@ -346,13 +346,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("id-about"))
-        .override_usage(format_usage(&translate!("id-usage")))
-        .infer_long_args(true)
-        .args_override_self(true)
+    uucore::util_app("id")
         .after_help(translate!("id-after-help"))
         .arg(
             Arg::new(options::OPT_IGNORE)

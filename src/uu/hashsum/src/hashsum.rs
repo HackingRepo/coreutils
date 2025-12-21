@@ -22,7 +22,7 @@ use uucore::checksum::validate::{
 use uucore::checksum::{AlgoKind, ChecksumError, SizedAlgoKind, calculate_blake2b_length_str};
 use uucore::error::UResult;
 use uucore::line_ending::LineEnding;
-use uucore::{format_usage, translate};
+use uucore::translate;
 
 const NAME: &str = "hashsum";
 
@@ -262,11 +262,7 @@ mod options {
 }
 
 pub fn uu_app_common() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("hashsum-about"))
-        .override_usage(format_usage(&translate!("hashsum-usage")))
+    uucore::util_app("hashsum")
         .infer_long_args(true)
         .args_override_self(true)
         .arg(
@@ -466,7 +462,7 @@ fn uu_app(binary_name: &str) -> (Command, bool) {
         let usage = translate!("hashsum-usage-specific", "utility_name" => binary_name);
         command
             .help_template(uucore::localized_help_template(binary_name))
-            .override_usage(format_usage(&usage))
+            .override_usage(uucore::format_usage(&usage))
     };
 
     (command, is_hashsum_bin)

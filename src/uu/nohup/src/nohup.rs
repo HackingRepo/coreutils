@@ -17,8 +17,8 @@ use std::process;
 use thiserror::Error;
 use uucore::display::Quotable;
 use uucore::error::{UError, UResult, set_exit_code};
+use uucore::show_error;
 use uucore::translate;
-use uucore::{format_usage, show_error};
 
 static NOHUP_OUT: &str = "nohup.out";
 // exit codes that match the GNU implementation
@@ -93,12 +93,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("nohup-about"))
+    uucore::util_app("nohup")
         .after_help(translate!("nohup-after-help"))
-        .override_usage(format_usage(&translate!("nohup-usage")))
         .arg(
             Arg::new(options::CMD)
                 .hide(true)
@@ -107,7 +103,6 @@ pub fn uu_app() -> Command {
                 .value_hint(clap::ValueHint::CommandName),
         )
         .trailing_var_arg(true)
-        .infer_long_args(true)
 }
 
 fn replace_fds() -> UResult<()> {

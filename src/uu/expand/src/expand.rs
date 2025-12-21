@@ -16,8 +16,8 @@ use thiserror::Error;
 use unicode_width::UnicodeWidthChar;
 use uucore::display::Quotable;
 use uucore::error::{FromIo, UError, UResult, set_exit_code};
+use uucore::show_error;
 use uucore::translate;
-use uucore::{format_usage, show_error};
 
 pub mod options {
     pub static TABS: &str = "tabs";
@@ -251,11 +251,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 
 pub fn uu_app() -> Command {
     uucore::clap_localization::configure_localized_command(
-        Command::new(uucore::util_name())
-            .version(uucore::crate_version!())
-            .about(translate!("expand-about"))
-            .after_help(LONG_HELP)
-            .override_usage(format_usage(&translate!("expand-usage"))),
+        uucore::util_app("expand").after_help(LONG_HELP),
     )
     .infer_long_args(true)
     .args_override_self(true)

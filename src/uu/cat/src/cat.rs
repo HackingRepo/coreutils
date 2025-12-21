@@ -25,10 +25,10 @@ use std::os::unix::net::UnixStream;
 use thiserror::Error;
 use uucore::display::Quotable;
 use uucore::error::UResult;
+use uucore::fast_inc::fast_inc_one;
 #[cfg(not(target_os = "windows"))]
 use uucore::libc;
 use uucore::translate;
-use uucore::{fast_inc::fast_inc_one, format_usage};
 
 /// Linux splice support
 #[cfg(any(target_os = "linux", target_os = "android"))]
@@ -283,12 +283,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .override_usage(format_usage(&translate!("cat-usage")))
-        .about(translate!("cat-about"))
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .infer_long_args(true)
+    uucore::util_app("cat")
         .args_override_self(true)
         .arg(
             Arg::new(options::FILE)

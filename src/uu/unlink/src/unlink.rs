@@ -11,7 +11,6 @@ use clap::{Arg, Command};
 
 use uucore::display::Quotable;
 use uucore::error::{FromIo, UResult};
-use uucore::format_usage;
 use uucore::translate;
 
 static OPT_PATH: &str = "FILE";
@@ -27,17 +26,11 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("unlink-about"))
-        .override_usage(format_usage(&translate!("unlink-usage")))
-        .infer_long_args(true)
-        .arg(
-            Arg::new(OPT_PATH)
-                .required(true)
-                .hide(true)
-                .value_parser(ValueParser::os_string())
-                .value_hint(clap::ValueHint::AnyPath),
-        )
+    uucore::util_app("unlink").arg(
+        Arg::new(OPT_PATH)
+            .required(true)
+            .hide(true)
+            .value_parser(ValueParser::os_string())
+            .value_hint(clap::ValueHint::AnyPath),
+    )
 }

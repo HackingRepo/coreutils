@@ -22,7 +22,7 @@ use uucore::checksum::{
 use uucore::error::UResult;
 use uucore::hardware::{HasHardwareFeatures as _, SimdPolicy};
 use uucore::line_ending::LineEnding;
-use uucore::{format_usage, translate};
+use uucore::translate;
 
 /// Print CPU hardware capability detection information to stderr
 /// This matches GNU cksum's --debug behavior
@@ -226,12 +226,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("cksum-about"))
-        .override_usage(format_usage(&translate!("cksum-usage")))
-        .infer_long_args(true)
+    uucore::util_app("cksum")
         .args_override_self(true)
         .arg(
             Arg::new(options::FILE)

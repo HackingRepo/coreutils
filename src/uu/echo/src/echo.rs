@@ -10,7 +10,7 @@ use std::ffi::{OsStr, OsString};
 use std::io::{self, StdoutLock, Write};
 use uucore::error::UResult;
 use uucore::format::{FormatChar, OctalParsing, parse_escape_only};
-use uucore::{format_usage, os_str_as_bytes};
+use uucore::os_str_as_bytes;
 
 use uucore::translate;
 
@@ -183,17 +183,13 @@ pub fn uu_app() -> Command {
     // Note: echo is different from the other utils in that it should **not**
     // have `infer_long_args(true)`, because, for example, `--ver` should be
     // printed as `--ver` and not show the version text.
-    Command::new(uucore::util_name())
+    uucore::util_app("echo")
         // TrailingVarArg specifies the final positional argument is a VarArg
         // and it doesn't attempts the parse any further args.
         // Final argument must have multiple(true) or the usage string equivalent.
         .trailing_var_arg(true)
         .allow_hyphen_values(true)
-        .version(uucore::crate_version!())
-        .about(translate!("echo-about"))
         .after_help(translate!("echo-after-help"))
-        .override_usage(format_usage(&translate!("echo-usage")))
-        .help_template(uucore::localized_help_template(uucore::util_name()))
         .arg(
             Arg::new(options::NO_NEWLINE)
                 .short('n')

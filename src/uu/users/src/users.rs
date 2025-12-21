@@ -11,7 +11,6 @@ use std::path::Path;
 use clap::builder::ValueParser;
 use clap::{Arg, Command};
 use uucore::error::UResult;
-use uucore::format_usage;
 use uucore::translate;
 
 #[cfg(target_os = "openbsd")]
@@ -85,12 +84,8 @@ pub fn uu_app() -> Command {
     #[cfg(target_env = "musl")]
     let about = translate!("users-about") + &translate!("users-about-musl-warning");
 
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
+    uucore::util_app("users")
         .about(about)
-        .override_usage(format_usage(&translate!("users-usage")))
-        .infer_long_args(true)
         .after_help(get_long_usage())
         .arg(
             Arg::new(ARG_FILE)

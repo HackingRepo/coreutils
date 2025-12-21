@@ -14,8 +14,6 @@ use uucore::display::Quotable;
 use uucore::error::{FromIo, UResult, USimpleError};
 use uucore::translate;
 
-use uucore::format_usage;
-
 use linebreak::break_lines;
 use parasplit::ParagraphStream;
 use thiserror::Error;
@@ -356,11 +354,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("fmt-about"))
-        .override_usage(format_usage(&translate!("fmt-usage")))
+    uucore::util_app("fmt")
         .infer_long_args(true)
         .args_override_self(true)
         .arg(

@@ -13,7 +13,6 @@ use std::os::unix::fs::FileTypeExt;
 use std::path::Path;
 use uucore::display::Quotable;
 use uucore::error::{FromIo, UResult, USimpleError, UUsageError};
-use uucore::format_usage;
 use uucore::translate;
 
 use uucore::parser::parse_size::{ParseSizeError, parse_size_u64};
@@ -109,13 +108,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    let cmd = Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .about(translate!("truncate-about"))
-        .override_usage(format_usage(&translate!("truncate-usage")))
+    uucore::util_app("truncate")
         .after_help(translate!("truncate-after-help"))
-        .infer_long_args(true);
-    uucore::clap_localization::configure_localized_command(cmd)
         .arg(
             Arg::new(options::IO_BLOCKS)
                 .short('o')

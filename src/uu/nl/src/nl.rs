@@ -9,7 +9,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Read, Write, stdin, stdout};
 use std::path::Path;
 use uucore::error::{FromIo, UResult, USimpleError, set_exit_code};
-use uucore::{format_usage, show_error, translate};
+use uucore::{show_error, translate};
 
 mod helper;
 
@@ -237,15 +237,10 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .about(translate!("nl-about"))
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .override_usage(format_usage(&translate!("nl-usage")))
+    uucore::util_app("nl")
         .after_help(translate!("nl-after-help"))
-        .infer_long_args(true)
-        .disable_help_flag(true)
         .args_override_self(true)
+        .disable_help_flag(true)
         .arg(
             Arg::new(options::HELP)
                 .long(options::HELP)

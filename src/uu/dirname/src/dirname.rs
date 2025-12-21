@@ -8,7 +8,6 @@ use std::ffi::OsString;
 use std::path::Path;
 use uucore::display::print_verbatim;
 use uucore::error::{UResult, UUsageError};
-use uucore::format_usage;
 use uucore::line_ending::LineEnding;
 
 use uucore::translate;
@@ -111,11 +110,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .about(translate!("dirname-about"))
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .override_usage(format_usage(&translate!("dirname-usage")))
+    uucore::util_app("dirname")
         .args_override_self(true)
         .infer_long_args(true)
         .after_help(translate!("dirname-after-help"))

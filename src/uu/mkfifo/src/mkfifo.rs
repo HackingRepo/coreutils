@@ -12,7 +12,7 @@ use uucore::display::Quotable;
 use uucore::error::{UResult, USimpleError};
 use uucore::translate;
 
-use uucore::{format_usage, show};
+use uucore::show;
 
 mod options {
     pub static MODE: &str = "mode";
@@ -81,12 +81,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .override_usage(format_usage(&translate!("mkfifo-usage")))
-        .about(translate!("mkfifo-about"))
-        .infer_long_args(true)
+    uucore::util_app("mkfifo")
         .arg(
             Arg::new(options::MODE)
                 .short('m')

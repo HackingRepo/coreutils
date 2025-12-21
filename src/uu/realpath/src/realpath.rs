@@ -19,7 +19,6 @@ use uucore::translate;
 use uucore::{
     display::{Quotable, print_verbatim},
     error::{FromIo, UResult},
-    format_usage,
     fs::{MissingHandling, ResolveMode, canonicalize},
     line_ending::LineEnding,
     show_if_err,
@@ -126,12 +125,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("realpath-about"))
-        .override_usage(format_usage(&translate!("realpath-usage")))
-        .infer_long_args(true)
+    uucore::util_app("realpath")
         .arg(
             Arg::new(OPT_QUIET)
                 .short('q')

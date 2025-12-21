@@ -13,9 +13,9 @@ use num_traits::Zero;
 
 use uucore::error::{FromIo, UResult};
 use uucore::extendedbigdecimal::ExtendedBigDecimal;
+use uucore::fast_inc::fast_inc;
 use uucore::format::num_format::FloatVariant;
 use uucore::format::{Format, num_format};
-use uucore::{fast_inc::fast_inc, format_usage};
 
 mod error;
 
@@ -222,13 +222,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
+    uucore::util_app("seq")
         .trailing_var_arg(true)
-        .infer_long_args(true)
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("seq-about"))
-        .override_usage(format_usage(&translate!("seq-usage")))
         .arg(
             Arg::new(OPT_SEPARATOR)
                 .short('s')

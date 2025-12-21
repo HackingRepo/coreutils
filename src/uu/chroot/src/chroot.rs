@@ -17,7 +17,7 @@ use uucore::entries::{Locate, Passwd, grp2gid, usr2uid};
 use uucore::error::{UResult, UUsageError, set_exit_code};
 use uucore::fs::{MissingHandling, ResolveMode, canonicalize};
 use uucore::libc::{self, chroot, setgid, setgroups, setuid};
-use uucore::{format_usage, show};
+use uucore::show;
 
 use uucore::translate;
 
@@ -235,13 +235,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    let cmd = Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .about(translate!("chroot-about"))
-        .override_usage(format_usage(&translate!("chroot-usage")))
-        .infer_long_args(true)
-        .trailing_var_arg(true);
-    uucore::clap_localization::configure_localized_command(cmd)
+    uucore::util_app("chroot")
+        .trailing_var_arg(true)
         .arg(
             Arg::new(options::NEWROOT)
                 .value_hint(clap::ValueHint::DirPath)

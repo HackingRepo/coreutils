@@ -12,7 +12,6 @@ use uucore::translate;
 use uucore::{
     display::Quotable,
     error::{UError, UResult},
-    format_usage,
 };
 
 mod locale_aware;
@@ -71,11 +70,7 @@ impl UError for ExprError {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("expr-about"))
-        .override_usage(format_usage(&translate!("expr-usage")))
+    uucore::util_app("expr")
         .after_help(translate!("expr-after-help"))
         .infer_long_args(true)
         .disable_help_flag(true)

@@ -10,7 +10,6 @@ use std::fs::hard_link;
 use std::path::Path;
 use uucore::display::Quotable;
 use uucore::error::{FromIo, UResult};
-use uucore::format_usage;
 use uucore::translate;
 
 pub mod options {
@@ -34,18 +33,12 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("link-about"))
-        .override_usage(format_usage(&translate!("link-usage")))
-        .infer_long_args(true)
-        .arg(
-            Arg::new(options::FILES)
-                .hide(true)
-                .required(true)
-                .num_args(2)
-                .value_hint(clap::ValueHint::AnyPath)
-                .value_parser(ValueParser::os_string()),
-        )
+    uucore::util_app("link").arg(
+        Arg::new(options::FILES)
+            .hide(true)
+            .required(true)
+            .num_args(2)
+            .value_hint(clap::ValueHint::AnyPath)
+            .value_parser(ValueParser::os_string()),
+    )
 }

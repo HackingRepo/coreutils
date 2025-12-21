@@ -20,7 +20,7 @@ use self::searcher::Searcher;
 use matcher::{ExactMatcher, Matcher, WhitespaceMatcher};
 use uucore::ranges::Range;
 use uucore::translate;
-use uucore::{format_usage, show_error, show_if_err};
+use uucore::{show_error, show_if_err};
 
 mod matcher;
 mod searcher;
@@ -594,13 +594,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .override_usage(format_usage(&translate!("cut-usage")))
-        .about(translate!("cut-about"))
+    uucore::util_app("cut")
         .after_help(translate!("cut-after-help"))
-        .infer_long_args(true)
         // While `args_override_self(true)` for some arguments, such as `-d`
         // and `--output-delimiter`, is consistent to the behavior of GNU cut,
         // arguments related to cutting mode, i.e. `-b`, `-c`, `-f`, should

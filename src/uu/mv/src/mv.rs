@@ -17,7 +17,6 @@ use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 #[cfg(all(unix, not(any(target_os = "macos", target_os = "redox"))))]
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::env;
 use std::ffi::OsString;
 use std::fs;
 use std::io;
@@ -53,7 +52,7 @@ use uucore::update_control;
 // These are exposed for projects (e.g. nushell) that want to create an `Options` value, which
 // requires these enums
 pub use uucore::{backup_control::BackupMode, update_control::UpdateMode};
-use uucore::{format_usage, prompt_yes, show};
+use uucore::{prompt_yes, show};
 
 use fs_extra::dir::get_size as dir_get_size;
 
@@ -222,17 +221,12 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .about(translate!("mv-about"))
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .override_usage(format_usage(&translate!("mv-usage")))
+    uucore::util_app("mv")
         .after_help(format!(
             "{}\n\n{}",
             translate!("mv-after-help"),
             backup_control::BACKUP_CONTROL_LONG_HELP
         ))
-        .infer_long_args(true)
         .arg(
             Arg::new(OPT_FORCE)
                 .short('f')

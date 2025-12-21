@@ -13,8 +13,8 @@ use uucore::display::Quotable;
 use uucore::error::{FromIo, UResult, USimpleError};
 use uucore::translate;
 
+use uucore::show;
 use uucore::signals::{ALL_SIGNALS, signal_by_name_or_value, signal_name_by_value};
-use uucore::{format_usage, show};
 
 // When the -l option is selected, the program displays the type of signal related to a certain
 // value or string. In case of a value, the program should control the lower 8 bits, but there is
@@ -97,12 +97,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("kill-about"))
-        .override_usage(format_usage(&translate!("kill-usage")))
-        .infer_long_args(true)
+    uucore::util_app("kill")
         .allow_negative_numbers(true)
         .arg(
             Arg::new(options::LIST)

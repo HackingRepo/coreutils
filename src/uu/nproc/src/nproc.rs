@@ -9,7 +9,6 @@ use clap::{Arg, ArgAction, Command};
 use std::{env, thread};
 use uucore::display::Quotable;
 use uucore::error::{UResult, USimpleError};
-use uucore::format_usage;
 use uucore::translate;
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
@@ -90,12 +89,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("nproc-about"))
-        .override_usage(format_usage(&translate!("nproc-usage")))
-        .infer_long_args(true)
+    uucore::util_app("nproc")
         .arg(
             Arg::new(OPT_ALL)
                 .long(OPT_ALL)

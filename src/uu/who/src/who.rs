@@ -6,7 +6,6 @@
 // spell-checker:ignore (ToDO) runlevel mesg
 
 use clap::{Arg, ArgAction, Command};
-use uucore::format_usage;
 use uucore::translate;
 
 mod platform;
@@ -45,12 +44,8 @@ pub fn uu_app() -> Command {
     #[cfg(target_env = "musl")]
     let about = translate!("who-about") + &translate!("who-about-musl-warning");
 
-    let cmd = Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
+    uucore::util_app("who")
         .about(about)
-        .override_usage(format_usage(&translate!("who-usage")))
-        .infer_long_args(true);
-    uucore::clap_localization::configure_localized_command(cmd)
         .arg(
             Arg::new(options::ALL)
                 .long(options::ALL)

@@ -10,7 +10,6 @@ use std::error::Error;
 use std::ffi::OsString;
 use std::io::{self, Write};
 use uucore::error::{UResult, USimpleError};
-use uucore::format_usage;
 #[cfg(unix)]
 use uucore::signals::enable_pipe_errors;
 use uucore::translate;
@@ -38,11 +37,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("yes-about"))
-        .override_usage(format_usage(&translate!("yes-usage")))
+    uucore::util_app("yes")
         .arg(
             Arg::new("STRING")
                 .value_parser(ValueParser::os_string())

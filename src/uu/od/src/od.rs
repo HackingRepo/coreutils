@@ -48,7 +48,7 @@ use uucore::translate;
 
 use uucore::parser::parse_size::ParseSizeError;
 use uucore::parser::shortcut_value_parser::ShortcutValueParser;
-use uucore::{format_usage, show_error, show_warning};
+use uucore::{show_error, show_warning};
 
 const PEEK_BUFFER_SIZE: usize = 4; // utf-8 can be 4 bytes
 
@@ -283,14 +283,9 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("od-about"))
-        .override_usage(format_usage(&translate!("od-usage")))
+    uucore::util_app("od")
         .after_help(translate!("od-after-help"))
         .dont_delimit_trailing_values(true)
-        .infer_long_args(true)
         .args_override_self(true)
         .disable_help_flag(true)
         .arg(

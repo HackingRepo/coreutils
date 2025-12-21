@@ -15,8 +15,8 @@ use uucore::display::Quotable;
 use uucore::error::{UError, UResult, USimpleError, get_exit_code};
 use uucore::fsext::{MountInfo, read_fs_list};
 use uucore::parser::parse_size::ParseSizeError;
+use uucore::show;
 use uucore::translate;
-use uucore::{format_usage, show};
 
 use clap::{Arg, ArgAction, ArgMatches, Command, parser::ValueSource};
 
@@ -468,11 +468,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("df-about"))
-        .override_usage(format_usage(&translate!("df-usage")))
+    uucore::util_app("df")
         .after_help(translate!("df-after-help"))
         .infer_long_args(true)
         .disable_help_flag(true)

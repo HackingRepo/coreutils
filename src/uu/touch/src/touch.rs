@@ -24,8 +24,8 @@ use std::path::{Path, PathBuf};
 use uucore::display::Quotable;
 use uucore::error::{FromIo, UResult, USimpleError};
 use uucore::parser::shortcut_value_parser::ShortcutValueParser;
+use uucore::show;
 use uucore::translate;
-use uucore::{format_usage, show};
 
 use crate::error::TouchError;
 
@@ -254,12 +254,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("touch-about"))
-        .override_usage(format_usage(&translate!("touch-usage")))
-        .infer_long_args(true)
+    uucore::util_app("touch")
         .disable_help_flag(true)
         .arg(
             Arg::new(options::HELP)

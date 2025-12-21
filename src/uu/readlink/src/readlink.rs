@@ -14,8 +14,8 @@ use uucore::error::{FromIo, UResult, UUsageError};
 use uucore::fs::{MissingHandling, ResolveMode, canonicalize};
 use uucore::libc::EINVAL;
 use uucore::line_ending::LineEnding;
+use uucore::show_error;
 use uucore::translate;
-use uucore::{format_usage, show_error};
 
 const OPT_CANONICALIZE: &str = "canonicalize";
 const OPT_CANONICALIZE_MISSING: &str = "canonicalize-missing";
@@ -111,12 +111,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("readlink-about"))
-        .override_usage(format_usage(&translate!("readlink-usage")))
-        .infer_long_args(true)
+    uucore::util_app("readlink")
         .arg(
             Arg::new(OPT_CANONICALIZE)
                 .short('f')

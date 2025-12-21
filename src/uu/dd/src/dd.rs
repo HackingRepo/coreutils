@@ -27,7 +27,6 @@ use uucore::io::OwnedFileDescriptorOrHandle;
 use uucore::translate;
 
 use std::cmp;
-use std::env;
 use std::ffi::OsString;
 use std::fs::{File, OpenOptions};
 use std::io::{self, Read, Seek, SeekFrom, Stdout, Write};
@@ -59,9 +58,9 @@ use uucore::display::Quotable;
 use uucore::error::{FromIo, UResult};
 #[cfg(unix)]
 use uucore::error::{USimpleError, set_exit_code};
+use uucore::show_error;
 #[cfg(target_os = "linux")]
 use uucore::show_if_err;
-use uucore::{format_usage, show_error};
 
 const BUF_INIT_BYTE: u8 = 0xDD;
 
@@ -1502,11 +1501,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("dd-about"))
-        .override_usage(format_usage(&translate!("dd-usage")))
+    uucore::util_app("dd")
         .after_help(translate!("dd-after-help"))
         .infer_long_args(true)
         .arg(Arg::new(options::OPERANDS).num_args(1..))

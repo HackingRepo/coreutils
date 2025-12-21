@@ -44,7 +44,6 @@ use uucore::display::Quotable;
 use uucore::error::{FromIo, strip_errno};
 use uucore::error::{UError, UResult, USimpleError, UUsageError};
 use uucore::extendedbigdecimal::ExtendedBigDecimal;
-use uucore::format_usage;
 use uucore::line_ending::LineEnding;
 use uucore::parser::num_parser::{ExtendedParser, ExtendedParserError};
 use uucore::parser::parse_size::{ParseSizeError, Parser};
@@ -1542,11 +1541,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 
 pub fn uu_app() -> Command {
     uucore::clap_localization::configure_localized_command(
-        Command::new(uucore::util_name())
-            .version(uucore::crate_version!())
-            .about(translate!("sort-about"))
-            .after_help(translate!("sort-after-help"))
-            .override_usage(format_usage(&translate!("sort-usage"))),
+        uucore::util_app("sort").after_help(translate!("sort-after-help")),
     )
     .infer_long_args(true)
     .disable_help_flag(true)

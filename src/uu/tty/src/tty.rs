@@ -8,7 +8,6 @@
 use clap::{Arg, ArgAction, Command};
 use std::io::{IsTerminal, Write};
 use uucore::error::{UResult, set_exit_code};
-use uucore::format_usage;
 
 use uucore::translate;
 
@@ -53,12 +52,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    let cmd = Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .about(translate!("tty-about"))
-        .override_usage(format_usage(&translate!("tty-usage")))
-        .infer_long_args(true);
-    uucore::clap_localization::configure_localized_command(cmd).arg(
+    uucore::util_app("tty").arg(
         Arg::new(options::SILENT)
             .long(options::SILENT)
             .visible_alias("quiet")

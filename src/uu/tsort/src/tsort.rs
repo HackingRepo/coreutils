@@ -11,7 +11,7 @@ use std::path::Path;
 use thiserror::Error;
 use uucore::display::Quotable;
 use uucore::error::{UError, UResult};
-use uucore::{format_usage, show};
+use uucore::show;
 
 use uucore::translate;
 
@@ -90,19 +90,13 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .override_usage(format_usage(&translate!("tsort-usage")))
-        .about(translate!("tsort-about"))
-        .infer_long_args(true)
-        .arg(
-            Arg::new(options::FILE)
-                .default_value("-")
-                .hide(true)
-                .value_parser(clap::value_parser!(OsString))
-                .value_hint(clap::ValueHint::FilePath),
-        )
+    uucore::util_app("tsort").arg(
+        Arg::new(options::FILE)
+            .default_value("-")
+            .hide(true)
+            .value_parser(clap::value_parser!(OsString))
+            .value_hint(clap::ValueHint::FilePath),
+    )
 }
 
 /// Find the element `x` in `vec` and remove it, returning its index.

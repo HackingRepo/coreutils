@@ -188,13 +188,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("install-about"))
-        .override_usage(format_usage(&translate!("install-usage")))
-        .infer_long_args(true)
-        .args_override_self(true)
+    uucore::util_app("install")
         .arg(backup_control::arguments::backup())
         .arg(backup_control::arguments::backup_no_args())
         .arg(

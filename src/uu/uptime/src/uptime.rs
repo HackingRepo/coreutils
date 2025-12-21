@@ -17,8 +17,6 @@ use uucore::uptime::*;
 
 use clap::{Arg, ArgAction, Command, ValueHint, builder::ValueParser};
 
-use uucore::format_usage;
-
 #[cfg(unix)]
 #[cfg(not(target_os = "openbsd"))]
 use uucore::utmpx::*;
@@ -69,19 +67,13 @@ pub fn uu_app() -> Command {
     #[cfg(target_env = "musl")]
     let about = translate!("uptime-about") + &translate!("uptime-about-musl-warning");
 
-    let cmd = Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(about)
-        .override_usage(format_usage(&translate!("uptime-usage")))
-        .infer_long_args(true)
-        .arg(
-            Arg::new(options::SINCE)
-                .short('s')
-                .long(options::SINCE)
-                .help(translate!("uptime-help-since"))
-                .action(ArgAction::SetTrue),
-        );
+    let cmd = uucore::util_app("uptime").about(about).arg(
+        Arg::new(options::SINCE)
+            .short('s')
+            .long(options::SINCE)
+            .help(translate!("uptime-help-since"))
+            .action(ArgAction::SetTrue),
+    );
     #[cfg(unix)]
     cmd.arg(
         Arg::new(options::PATH)

@@ -19,7 +19,7 @@ use uucore::translate;
 
 use uucore::parser::shortcut_value_parser::ShortcutValueParser;
 use uucore::ranges::Range;
-use uucore::{format_usage, show, show_error};
+use uucore::{show, show_error};
 
 pub mod errors;
 pub mod format;
@@ -277,14 +277,9 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("numfmt-about"))
+    uucore::util_app("numfmt")
         .after_help(translate!("numfmt-after-help"))
-        .override_usage(format_usage(&translate!("numfmt-usage")))
         .allow_negative_numbers(true)
-        .infer_long_args(true)
         .arg(
             Arg::new(DELIMITER)
                 .short('d')

@@ -17,7 +17,6 @@ use clap::{Arg, ArgAction, ArgMatches, Command};
 use regex::Regex;
 use uucore::display::Quotable;
 use uucore::error::{FromIo, UResult};
-use uucore::format_usage;
 
 mod csplit_error;
 mod patterns;
@@ -637,13 +636,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("csplit-about"))
-        .override_usage(format_usage(&translate!("csplit-usage")))
+    uucore::util_app("csplit")
         .args_override_self(true)
-        .infer_long_args(true)
         .arg(
             Arg::new(options::SUFFIX_FORMAT)
                 .short('b')

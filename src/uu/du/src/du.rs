@@ -33,7 +33,7 @@ use uucore::parser::parse_glob;
 use uucore::parser::parse_size::{ParseSizeError, parse_size_non_zero_u64, parse_size_u64};
 use uucore::parser::shortcut_value_parser::ShortcutValueParser;
 use uucore::time::{FormatSystemTimeFallback, format, format_system_time};
-use uucore::{format_usage, show, show_error, show_warning};
+use uucore::{show, show_error, show_warning};
 #[cfg(windows)]
 use windows_sys::Win32::Foundation::HANDLE;
 #[cfg(windows)]
@@ -1236,12 +1236,8 @@ fn parse_depth(max_depth_str: Option<&str>, summarize: bool) -> UResult<Option<u
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("du-about"))
+    uucore::util_app("du")
         .after_help(translate!("du-after-help"))
-        .override_usage(format_usage(&translate!("du-usage")))
         .infer_long_args(true)
         .disable_help_flag(true)
         .arg(

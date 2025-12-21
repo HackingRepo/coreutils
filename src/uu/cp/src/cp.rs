@@ -39,8 +39,7 @@ use uucore::{backup_control, update_control};
 // requires these enum.
 pub use uucore::{backup_control::BackupMode, update_control::UpdateMode};
 use uucore::{
-    format_usage, parser::shortcut_value_parser::ShortcutValueParser, prompt_yes, show_error,
-    show_warning,
+    parser::shortcut_value_parser::ShortcutValueParser, prompt_yes, show_error, show_warning,
 };
 
 use crate::copydir::copy_directory;
@@ -519,17 +518,12 @@ pub fn uu_app() -> Command {
         options::ATTRIBUTES_ONLY,
         options::COPY_CONTENTS,
     ];
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .about(translate!("cp-about"))
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .override_usage(format_usage(&translate!("cp-usage")))
+    uucore::util_app("cp")
         .after_help(format!(
             "{}\n\n{}",
             translate!("cp-after-help"),
             backup_control::BACKUP_CONTROL_LONG_HELP
         ))
-        .infer_long_args(true)
         .args_override_self(true)
         .arg(
             Arg::new(options::TARGET_DIRECTORY)

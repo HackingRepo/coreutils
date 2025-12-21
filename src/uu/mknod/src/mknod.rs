@@ -12,7 +12,6 @@ use std::ffi::CString;
 
 use uucore::display::Quotable;
 use uucore::error::{UResult, USimpleError, UUsageError, set_exit_code};
-use uucore::format_usage;
 use uucore::translate;
 
 const MODE_RW_UGO: mode_t = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
@@ -168,13 +167,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .override_usage(format_usage(&translate!("mknod-usage")))
+    uucore::util_app("mknod")
         .after_help(translate!("mknod-after-help"))
-        .about(translate!("mknod-about"))
-        .infer_long_args(true)
         .arg(
             Arg::new(options::MODE)
                 .short('m')

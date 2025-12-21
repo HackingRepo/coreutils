@@ -16,8 +16,8 @@ use uucore::error::{UResult, USimpleError, UUsageError};
 use uucore::parser::parse_size::{ParseSizeError, parse_size_u64};
 use uucore::parser::parse_time;
 use uucore::parser::shortcut_value_parser::ShortcutValueParser;
+use uucore::show_warning;
 use uucore::translate;
-use uucore::{format_usage, show_warning};
 
 pub mod options {
     pub mod verbosity {
@@ -459,12 +459,7 @@ pub fn uu_app() -> Command {
     #[cfg(target_os = "windows")]
     let polling_help = translate!("tail-help-polling-windows");
 
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("tail-about"))
-        .override_usage(format_usage(&translate!("tail-usage")))
-        .infer_long_args(true)
+    uucore::util_app("tail")
         .arg(
             Arg::new(options::BYTES)
                 .short('c')

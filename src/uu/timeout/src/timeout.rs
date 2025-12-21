@@ -23,7 +23,7 @@ use uucore::translate;
 use uucore::signals::enable_pipe_errors;
 
 use uucore::{
-    format_usage, show_error,
+    show_error,
     signals::{signal_by_name_or_value, signal_name_by_value},
 };
 
@@ -120,11 +120,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new("timeout")
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("timeout-about"))
-        .override_usage(format_usage(&translate!("timeout-usage")))
+    uucore::util_app("timeout")
         .arg(
             Arg::new(options::FOREGROUND)
                 .long(options::FOREGROUND)

@@ -20,7 +20,6 @@ use regex::Regex;
 use thiserror::Error;
 use uucore::display::Quotable;
 use uucore::error::{FromIo, UError, UResult, UUsageError};
-use uucore::format_usage;
 use uucore::translate;
 
 #[derive(Debug, PartialEq)]
@@ -883,12 +882,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .about(translate!("ptx-about"))
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .override_usage(format_usage(&translate!("ptx-usage")))
-        .infer_long_args(true)
+    uucore::util_app("ptx")
         .arg(
             Arg::new(options::FILE)
                 .hide(true)

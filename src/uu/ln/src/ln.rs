@@ -10,7 +10,7 @@ use uucore::display::Quotable;
 use uucore::error::{FromIo, UError, UResult};
 use uucore::fs::{make_path_relative_to, paths_refer_to_same_file};
 use uucore::translate;
-use uucore::{format_usage, prompt_yes, show_error};
+use uucore::{prompt_yes, show_error};
 
 use std::borrow::Cow;
 use std::collections::HashSet;
@@ -142,12 +142,7 @@ pub fn uu_app() -> Command {
         backup_control::BACKUP_CONTROL_LONG_HELP
     );
 
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("ln-about"))
-        .override_usage(format_usage(&translate!("ln-usage")))
-        .infer_long_args(true)
+    uucore::util_app("ln")
         .after_help(after_help)
         .arg(backup_control::arguments::backup())
         .arg(backup_control::arguments::backup_no_args())

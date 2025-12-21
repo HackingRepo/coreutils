@@ -23,7 +23,7 @@ use uucore::display::Quotable;
 use uucore::error::{FromIo, UError, UResult};
 use uucore::parser::shortcut_value_parser::ShortcutValueParser;
 use uucore::translate;
-use uucore::{format_usage, os_str_as_bytes, prompt_yes, show_error};
+use uucore::{os_str_as_bytes, prompt_yes, show_error};
 
 mod platform;
 #[cfg(target_os = "linux")]
@@ -281,13 +281,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .about(translate!("rm-about"))
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .override_usage(format_usage(&translate!("rm-usage")))
+    uucore::util_app("rm")
         .after_help(translate!("rm-after-help"))
-        .infer_long_args(true)
         .args_override_self(true)
         .arg(
             Arg::new(OPT_FORCE)

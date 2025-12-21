@@ -7,7 +7,6 @@
 
 use uucore::display::Quotable;
 pub use uucore::entries::{self, Group, Locate, Passwd};
-use uucore::format_usage;
 use uucore::perms::{GidUidOwnerFilter, IfFrom, chown_base, options};
 use uucore::translate;
 
@@ -75,12 +74,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("chown-about"))
-        .override_usage(format_usage(&translate!("chown-usage")))
-        .infer_long_args(true)
+    uucore::util_app("chown")
         .disable_help_flag(true)
         .arg(
             Arg::new(options::HELP)

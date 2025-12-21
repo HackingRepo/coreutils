@@ -11,7 +11,6 @@ use std::fs::{File, metadata};
 use std::io::{self, BufRead, BufReader, Read, StdinLock, stdin};
 use std::path::Path;
 use uucore::error::{FromIo, UResult, USimpleError};
-use uucore::format_usage;
 use uucore::fs::paths_refer_to_same_file;
 use uucore::line_ending::LineEnding;
 use uucore::translate;
@@ -340,12 +339,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("comm-about"))
-        .override_usage(format_usage(&translate!("comm-usage")))
-        .infer_long_args(true)
+    uucore::util_app("comm")
         .args_override_self(true)
         .arg(
             Arg::new(options::COLUMN_1)

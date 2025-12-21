@@ -13,8 +13,8 @@ use std::path::PathBuf;
 use uucore::display::Quotable;
 use uucore::error::UResult;
 use uucore::parser::shortcut_value_parser::ShortcutValueParser;
+use uucore::show_error;
 use uucore::translate;
-use uucore::{format_usage, show_error};
 
 // spell-checker:ignore nopipe
 
@@ -93,13 +93,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("tee-about"))
-        .override_usage(format_usage(&translate!("tee-usage")))
+    uucore::util_app("tee")
         .after_help(translate!("tee-after-help"))
-        .infer_long_args(true)
         // Since we use value-specific help texts for "--output-error", clap's "short help" and "long help" differ.
         // However, this is something that the GNU tests explicitly test for, so we *always* show the long help instead.
         .disable_help_flag(true)

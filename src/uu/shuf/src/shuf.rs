@@ -19,7 +19,6 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use uucore::display::{OsWrite, Quotable};
 use uucore::error::{FromIo, UResult, USimpleError, UUsageError};
-use uucore::format_usage;
 use uucore::translate;
 
 mod rand_read_adapter;
@@ -142,12 +141,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .about(translate!("shuf-about"))
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .override_usage(format_usage(&translate!("shuf-usage")))
-        .infer_long_args(true)
+    uucore::util_app("shuf")
         .arg(
             Arg::new(options::ECHO)
                 .short('e')

@@ -17,10 +17,7 @@ use clap::{Arg, ArgAction, ArgMatches, Command};
 use dns_lookup::lookup_host;
 use uucore::translate;
 
-use uucore::{
-    error::{FromIo, UResult},
-    format_usage,
-};
+use uucore::error::{FromIo, UResult};
 
 static OPT_DOMAIN: &str = "domain";
 static OPT_IP_ADDRESS: &str = "ip-address";
@@ -74,11 +71,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("hostname-about"))
-        .override_usage(format_usage(&translate!("hostname-usage")))
+    uucore::util_app("hostname")
         .infer_long_args(true)
         .arg(
             Arg::new(OPT_DOMAIN)

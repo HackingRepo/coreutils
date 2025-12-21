@@ -19,7 +19,7 @@ use uucore::display::Quotable;
 use uucore::error::{UResult, USimpleError, UUsageError};
 use uucore::translate;
 
-use uucore::{format_usage, parser::parse_glob};
+use uucore::parser::parse_glob;
 
 mod options {
     pub const BOURNE_SHELL: &str = "bourne-shell";
@@ -241,12 +241,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("dircolors-about"))
+    uucore::util_app("dircolors")
         .after_help(translate!("dircolors-after-help"))
-        .override_usage(format_usage(&translate!("dircolors-usage")))
         .args_override_self(true)
         .infer_long_args(true)
         .arg(

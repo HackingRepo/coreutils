@@ -16,8 +16,8 @@ use thiserror::Error;
 use unicode_width::UnicodeWidthChar;
 use uucore::display::Quotable;
 use uucore::error::{FromIo, UError, UResult, USimpleError};
+use uucore::show;
 use uucore::translate;
-use uucore::{format_usage, show};
 
 const DEFAULT_TABSTOP: usize = 8;
 
@@ -157,12 +157,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .override_usage(format_usage(&translate!("unexpand-usage")))
-        .about(translate!("unexpand-about"))
-        .infer_long_args(true)
+    uucore::util_app("unexpand")
         .arg(
             Arg::new(options::FILE)
                 .hide(true)

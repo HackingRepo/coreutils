@@ -9,7 +9,7 @@
 use clap::builder::ValueParser;
 use uucore::error::{UResult, USimpleError, UUsageError};
 use uucore::translate;
-use uucore::{display::Quotable, format_usage, show_error, show_warning};
+use uucore::{display::Quotable, show_error, show_warning};
 
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use selinux::{OpaqueSecurityContext, SecurityContext};
@@ -154,12 +154,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    let cmd = Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .about(translate!("chcon-about"))
-        .override_usage(format_usage(&translate!("chcon-usage")))
-        .infer_long_args(true);
-    uucore::clap_localization::configure_localized_command(cmd)
+    uucore::util_app("chcon")
         .args_override_self(true)
         .disable_help_flag(true)
         .arg(

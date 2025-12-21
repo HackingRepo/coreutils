@@ -20,7 +20,7 @@ use uucore::error::{FromIo, UResult, USimpleError, UUsageError};
 use uucore::parser::parse_size::parse_size_u64;
 use uucore::parser::shortcut_value_parser::ShortcutValueParser;
 use uucore::translate;
-use uucore::{format_usage, show_error, show_if_err};
+use uucore::{show_error, show_if_err};
 
 pub mod options {
     pub const FORCE: &str = "force";
@@ -314,13 +314,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("shred-about"))
+    uucore::util_app("shred")
         .after_help(translate!("shred-after-help"))
-        .override_usage(format_usage(&translate!("shred-usage")))
-        .infer_long_args(true)
         .arg(
             Arg::new(options::FORCE)
                 .long(options::FORCE)

@@ -13,7 +13,6 @@ use std::io::{BufRead, BufReader, BufWriter, Write, stdin, stdout};
 use std::num::IntErrorKind;
 use uucore::display::Quotable;
 use uucore::error::{FromIo, UError, UResult, USimpleError};
-use uucore::format_usage;
 use uucore::parser::shortcut_value_parser::ShortcutValueParser;
 use uucore::posix::{OBSOLETE, posix_version};
 use uucore::translate;
@@ -712,13 +711,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    let cmd = Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .about(translate!("uniq-about"))
-        .override_usage(format_usage(&translate!("uniq-usage")))
-        .infer_long_args(true)
-        .after_help(translate!("uniq-after-help"));
-    uucore::clap_localization::configure_localized_command(cmd)
+    uucore::util_app("uniq")
+        .after_help(translate!("uniq-after-help"))
         .arg(
             Arg::new(options::ALL_REPEATED)
                 .short('D')

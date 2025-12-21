@@ -240,6 +240,36 @@ pub fn format_usage(s: &str) -> String {
     s.replace("{}", crate::execution_phrase())
 }
 
+/// Creates a base clap Command with standard uutils configuration.
+///
+/// This function sets up the common boilerplate used by all utilities:
+/// - Command name from `util_name()`
+/// - Version from `crate_version!()`
+/// - Localized help template
+/// - About text from "{util_name}-about" translation key
+/// - Usage text from "{util_name}-usage" translation key
+/// - `infer_long_args(true)`
+///
+/// # Example
+/// ```ignore
+/// pub fn uu_app() -> Command {
+///     uucore::util_app("mkdir")
+///         .after_help(translate!("mkdir-after-help"))
+///         .arg(...)
+/// }
+/// ```
+pub fn util_app(util_name_key: &str) -> clap::Command {
+    let about_key = format!("{util_name_key}-about");
+    let usage_key = format!("{util_name_key}-usage");
+
+    clap::Command::new(util_name())
+        .version(crate_version!())
+        .help_template(localized_help_template(util_name()))
+        .about(crate::locale::get_message(&about_key))
+        .override_usage(format_usage(&crate::locale::get_message(&usage_key)))
+        .infer_long_args(true)
+}
+
 /// Creates a localized help template for clap commands.
 ///
 /// This function returns a help template that uses the localized

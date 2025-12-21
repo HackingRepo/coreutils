@@ -12,7 +12,6 @@ use std::io::{Write, stdout};
 use std::path::PathBuf;
 use uucore::display::Quotable;
 use uucore::error::{UResult, UUsageError};
-use uucore::format_usage;
 use uucore::line_ending::LineEnding;
 
 use uucore::translate;
@@ -79,12 +78,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("basename-about"))
-        .override_usage(format_usage(&translate!("basename-usage")))
-        .infer_long_args(true)
+    uucore::util_app("basename")
         .arg(
             Arg::new(options::MULTIPLE)
                 .short('a')

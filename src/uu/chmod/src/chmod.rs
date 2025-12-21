@@ -20,7 +20,7 @@ use uucore::perms::{TraverseSymlinks, configure_symlink_and_recursion};
 
 #[cfg(target_os = "linux")]
 use uucore::safe_traversal::DirFd;
-use uucore::{format_usage, show, show_error};
+use uucore::{show, show_error};
 
 use uucore::translate;
 
@@ -175,13 +175,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .about(translate!("chmod-about"))
-        .override_usage(format_usage(&translate!("chmod-usage")))
-        .help_template(uucore::localized_help_template(uucore::util_name()))
+    uucore::util_app("chmod")
         .args_override_self(true)
-        .infer_long_args(true)
         .no_binary_name(true)
         .disable_help_flag(true)
         .after_help(translate!("chmod-after-help"))

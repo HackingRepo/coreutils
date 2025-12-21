@@ -21,7 +21,7 @@ use uucore::fs::is_stdin_directory;
 #[cfg(not(target_os = "windows"))]
 use uucore::libc;
 use uucore::translate;
-use uucore::{format_usage, os_str_as_bytes, show};
+use uucore::{os_str_as_bytes, show};
 
 mod options {
     pub const COMPLEMENT: &str = "complement";
@@ -159,13 +159,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("tr-about"))
-        .override_usage(format_usage(&translate!("tr-usage")))
+    uucore::util_app("tr")
         .after_help(translate!("tr-after-help"))
-        .infer_long_args(true)
         .trailing_var_arg(true)
         .arg(
             Arg::new(options::COMPLEMENT)

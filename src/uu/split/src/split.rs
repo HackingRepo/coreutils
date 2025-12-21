@@ -13,7 +13,6 @@ mod strategy;
 use crate::filenames::{FilenameIterator, Suffix, SuffixError};
 use crate::strategy::{NumberType, Strategy, StrategyError};
 use clap::{Arg, ArgAction, ArgMatches, Command, ValueHint, parser::ValueSource};
-use std::env;
 use std::ffi::OsString;
 use std::fs::{File, metadata};
 use std::io;
@@ -26,7 +25,6 @@ use uucore::translate;
 
 use uucore::parser::parse_size::parse_size_u64;
 
-use uucore::format_usage;
 use uucore::uio_error;
 
 static OPT_BYTES: &str = "bytes";
@@ -225,13 +223,8 @@ fn handle_preceding_options(
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("split-about"))
+    uucore::util_app("split")
         .after_help(translate!("split-after-help"))
-        .override_usage(format_usage(&translate!("split-usage")))
-        .infer_long_args(true)
         // strategy (mutually exclusive)
         .arg(
             Arg::new(OPT_BYTES)

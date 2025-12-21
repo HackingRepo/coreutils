@@ -17,8 +17,8 @@ use uucore::translate;
 
 #[cfg(not(windows))]
 use uucore::mode;
+use uucore::show_if_err;
 use uucore::{display::Quotable, fs::dir_strip_dot_for_creation};
-use uucore::{format_usage, show_if_err};
 
 static DEFAULT_PERM: u32 = 0o777;
 
@@ -98,12 +98,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("mkdir-about"))
-        .override_usage(format_usage(&translate!("mkdir-usage")))
-        .infer_long_args(true)
+    uucore::util_app("mkdir")
         .after_help(translate!("mkdir-after-help"))
         .arg(
             Arg::new(options::MODE)

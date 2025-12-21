@@ -15,7 +15,7 @@ use uucore::fsext::{
     read_fs_list, statfs,
 };
 use uucore::libc::mode_t;
-use uucore::{entries, format_usage, show_error, show_warning};
+use uucore::{entries, show_error, show_warning};
 
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use std::borrow::Cow;
@@ -1319,13 +1319,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("stat-about"))
+    uucore::util_app("stat")
         .after_help(translate!("stat-after-help"))
-        .override_usage(format_usage(&translate!("stat-usage")))
-        .infer_long_args(true)
         .arg(
             Arg::new(options::DEREFERENCE)
                 .short('L')

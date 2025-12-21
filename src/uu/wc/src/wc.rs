@@ -28,7 +28,6 @@ use uucore::translate;
 
 use uucore::{
     error::{FromIo, UError, UResult},
-    format_usage,
     parser::shortcut_value_parser::ShortcutValueParser,
     quoting_style::{self, QuotingStyle},
     show,
@@ -385,12 +384,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("wc-about"))
-        .override_usage(format_usage(&translate!("wc-usage")))
-        .infer_long_args(true)
+    uucore::util_app("wc")
         .args_override_self(true)
         .arg(
             Arg::new(options::BYTES)

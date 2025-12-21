@@ -7,11 +7,8 @@
 
 use clap::{Arg, ArgAction, Command};
 use platform_info::*;
+use uucore::error::{UResult, USimpleError};
 use uucore::translate;
-use uucore::{
-    error::{UResult, USimpleError},
-    format_usage,
-};
 
 pub mod options {
     pub static ALL: &str = "all";
@@ -139,12 +136,7 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("uname-about"))
-        .override_usage(format_usage(&translate!("uname-usage")))
-        .infer_long_args(true)
+    uucore::util_app("uname")
         .arg(
             Arg::new(options::ALL)
                 .short('a')

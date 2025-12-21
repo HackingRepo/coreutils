@@ -17,7 +17,6 @@ use std::fs;
 use std::os::unix::fs::MetadataExt;
 use uucore::display::Quotable;
 use uucore::error::{UResult, USimpleError};
-use uucore::format_usage;
 #[cfg(not(windows))]
 use uucore::process::{getegid, geteuid};
 
@@ -33,12 +32,7 @@ use uucore::translate;
 pub fn uu_app() -> Command {
     // Disable printing of -h and -v as valid alternatives for --help and --version,
     // since we don't recognize -h and -v as help/version flags.
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("test-about"))
-        .override_usage(format_usage(&translate!("test-usage")))
-        .after_help(translate!("test-after-help"))
+    uucore::util_app("test").after_help(translate!("test-after-help"))
 }
 
 #[uucore::main]

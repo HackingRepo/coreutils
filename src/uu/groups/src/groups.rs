@@ -10,7 +10,7 @@ use uucore::{
     display::Quotable,
     entries::{Locate, Passwd, get_groups_gnu, gid2grp},
     error::{UError, UResult},
-    format_usage, show,
+    show,
 };
 
 use clap::{Arg, ArgAction, Command};
@@ -79,16 +79,10 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .about(translate!("groups-about"))
-        .override_usage(format_usage(&translate!("groups-usage")))
-        .infer_long_args(true)
-        .arg(
-            Arg::new(options::USERS)
-                .action(ArgAction::Append)
-                .value_name(options::USERS)
-                .value_hint(clap::ValueHint::Username),
-        )
+    uucore::util_app("groups").infer_long_args(true).arg(
+        Arg::new(options::USERS)
+            .action(ArgAction::Append)
+            .value_name(options::USERS)
+            .value_hint(clap::ValueHint::Username),
+    )
 }

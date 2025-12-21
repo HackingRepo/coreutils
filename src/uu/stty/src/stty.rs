@@ -907,7 +907,7 @@ fn apply_char_mapping(termios: &mut Termios, mapping: &(S, u8)) {
 ///
 /// The state array contains:
 /// - `state[0]`: input flags
-/// - `state[1]`: output flags  
+/// - `state[1]`: output flags
 /// - `state[2]`: control flags
 /// - `state[3]`: local flags
 /// - `state[4..]`: control characters (optional)
@@ -1145,12 +1145,7 @@ fn get_sane_control_char(cc_index: S) -> u8 {
 }
 
 pub fn uu_app() -> Command {
-    Command::new(uucore::util_name())
-        .version(uucore::crate_version!())
-        .help_template(uucore::localized_help_template(uucore::util_name()))
-        .override_usage(format_usage(&translate!("stty-usage")))
-        .about(translate!("stty-about"))
-        .infer_long_args(true)
+    uucore::util_app("stty")
         .arg(
             Arg::new(options::ALL)
                 .short('a')
