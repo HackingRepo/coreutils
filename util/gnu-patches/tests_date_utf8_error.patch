@@ -1,0 +1,13 @@
+Index: gnu/tests/date/date.pl
+===================================================================
+--- gnu.orig/tests/date/date.pl
++++ gnu/tests/date/date.pl
+@@ -284,7 +284,7 @@ my @Tests =
+       {OUT=>'WED DEC'}],
+ 
+      ['invalid-high-bit-set', "-d '\xb0'",
+-      {ERR => "date: invalid date '\\260'\n"},
++      {ERR => "error: invalid UTF-8 was detected in one or more arguments\n\nFor more information, try '--help'.\n"},
+       {EXIT => 1},
+      ],
+ 

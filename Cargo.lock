@@ -3362,6 +3362,7 @@ dependencies = [
  "jiff-icu",
  "nix",
  "parse_datetime",
+ "regex",
  "tempfile",
  "uucore",
  "windows-sys 0.61.2",
