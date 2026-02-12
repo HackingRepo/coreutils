@@ -2171,3 +2171,104 @@ fn test_date_cross_tz_mishandled() {
         .stdout_contains("21:00:00")
         .stdout_contains("1969");
 }
+
+// Tests for GNU test invalid-high-bit-set: invalid UTF-8 in date string
+#[test]
+#[cfg(unix)]
+fn test_date_invalid_high_bit_set() {
+    use std::os::unix::ffi::OsStrExt;
+
+    // GNU test invalid-high-bit-set: Invalid UTF-8 byte (0xb0) should produce
+    // GNU-compatible error message with octal escape sequence
+    let invalid_bytes = b"\xb0";
+    let invalid_arg = std::ffi::OsStr::from_bytes(invalid_bytes);
+
+    new_ucmd!()
+        .args(&[std::ffi::OsStr::new("-d"), invalid_arg])
+        .fails()
+        .code_is(1)
+        .stderr_contains("invalid date '\\260'");
+}
+
+// Tests for GNU format modifiers
+#[test]
+fn test_date_format_modifier_width() {
+    // Test width modifier: %10Y should pad year to 10 digits
+    new_ucmd!()
+        .env("TZ", "UTC")
+        .args(&["-d", "1999-06-01", "+%10Y"])
+        .succeeds()
+        .stdout_is("0000001999\n");
+}
+
+#[test]
+fn test_date_format_modifier_underscore_padding() {
+    // Test underscore flag: %_10m should pad month with spaces
+    new_ucmd!()
+        .env("TZ", "UTC")
+        .args(&["-d", "1999-06-01", "+%_10m"])
+        .succeeds()
+        .stdout_is("         6\n");
+}
+
+#[test]
+fn test_date_format_modifier_left_align() {
+    // Test left-align flag: %-10Y should left-align year
+    new_ucmd!()
+        .env("TZ", "UTC")
+        .args(&["-d", "1999-06-01", "+%-10Y"])
+        .succeeds()
+        .stdout_is("1999      \n");
+}
+
+#[test]
+fn test_date_format_modifier_uppercase() {
+    // Test uppercase flag: %^B should uppercase month name
+    new_ucmd!()
+        .env("TZ", "UTC")
+        .env("LC_ALL", "C")
+        .args(&["-d", "1999-06-01", "+%^B"])
+        .succeeds()
+        .stdout_is("JUNE\n");
+}
+
+#[test]
+fn test_date_format_modifier_force_sign() {
+    // Test force sign flag: %+6Y should show + sign for positive years
+    new_ucmd!()
+        .env("TZ", "UTC")
+        .args(&["-d", "1970-01-01", "+%+6Y"])
+        .succeeds()
+        .stdout_is("+01970\n");
+}
+
+#[test]
+fn test_date_format_modifier_combined_flags() {
+    // Test combined flags: %-^10B should uppercase and left-align
+    new_ucmd!()
+        .env("TZ", "UTC")
+        .env("LC_ALL", "C")
+        .args(&["-d", "1999-06-01", "+%-^10B"])
+        .succeeds()
+        .stdout_is("JUNE      \n");
+}
+
+#[test]
+fn test_date_format_modifier_multiple() {
+    // Test multiple modifiers in one format string
+    new_ucmd!()
+        .env("TZ", "UTC")
+        .args(&["-d", "1999-06-01", "+%10Y-%_5m-%-5d"])
+        .succeeds()
+        .stdout_is("0000001999-    6-1    \n");
+}
+
+#[test]
+fn test_date_format_modifier_percent_escape() {
+    // Test that %% is preserved correctly with modifiers
+    new_ucmd!()
+        .env("TZ", "UTC")
+        .args(&["-d", "1999-06-01", "+%%Y=%10Y"])
+        .succeeds()
+        .stdout_is("%Y=0000001999\n");
+}

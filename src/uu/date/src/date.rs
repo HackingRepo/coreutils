@@ -5,6 +5,7 @@
 
 // spell-checker:ignore strtime ; (format) DATEFILE MMDDhhmm ; (vars) datetime datetimes getres AWST ACST AEST foobarbaz
 
+mod format_modifiers;
 mod locale;
 
 use clap::{Arg, ArgAction, Command};
@@ -131,6 +132,40 @@ enum DayDelta {
     Previous,
     /// The date advances to the next day.
     Next,
+}
+
+/// Escape invalid UTF-8 bytes in GNU-compatible octal notation.
+///
+/// Converts bytes to a string with printable ASCII characters preserved
+/// and non-printable/invalid UTF-8 bytes escaped as `\NNN` octal sequences.
+///
+/// This matches GNU date's behavior for invalid input.
+///
+/// # Arguments
+/// * `bytes` - The byte sequence to escape
+///
+/// # Returns
+/// A string with invalid bytes escaped in octal notation
+///
+/// # Example
+/// ```ignore
+/// let invalid = b"\xb0";
+/// assert_eq!(escape_invalid_bytes(invalid), "\\260");
+/// ```
+fn escape_invalid_bytes(bytes: &[u8]) -> String {
+    let escaped = bytes
+        .iter()
+        .flat_map(|&b| {
+            // Preserve printable ASCII except backslash
+            if (0x20..0x7f).contains(&b) && b != b'\\' {
+                vec![b]
+            } else {
+                // Escape as octal: \NNN
+                format!("\\{b:03o}").into_bytes()
+            }
+        })
+        .collect::<Vec<u8>>();
+    String::from_utf8_lossy(&escaped).into_owned()
 }
 
 /// Strip parenthesized comments from a date string.
@@ -278,7 +313,13 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
         Zoned::now()
     };
 
-    let date_source = if let Some(date) = matches.get_one::<String>(OPT_DATE) {
+    let date_source = if let Some(date_os) = matches.get_one::<std::ffi::OsString>(OPT_DATE) {
+        // Convert OsString to String, handling invalid UTF-8 with GNU-compatible error
+        let date = date_os.to_str().ok_or_else(|| {
+            let bytes = date_os.as_encoded_bytes();
+            let escaped_str = escape_invalid_bytes(bytes);
+            USimpleError::new(1, format!("invalid date '{escaped_str}'"))
+        })?;
         DateSource::Human(date.into())
     } else if let Some(file) = matches.get_one::<String>(OPT_FILE) {
         match file.as_ref() {
@@ -537,6 +578,7 @@ pub fn uu_app() -> Command {
                 .value_name("STRING")
                 .allow_hyphen_values(true)
                 .overrides_with(OPT_DATE)
+                .value_parser(clap::value_parser!(std::ffi::OsString))
                 .help(translate!("date-help-date")),
         )
         .arg(
@@ -639,15 +681,25 @@ fn format_date_with_locale_aware_months(
     format_string: &str,
     config: &Config<PosixCustom>,
     skip_localization: bool,
-) -> Result<String, jiff::Error> {
-    let broken_down = BrokenDownTime::from(date);
-
-    if !should_use_icu_locale() || skip_localization {
-        return broken_down.to_string_with_config(config, format_string);
+) -> Result<String, String> {
+    // First check if format string has GNU modifiers (width/flags) and format if present
+    // This optimization combines detection and formatting in a single pass
+    if let Some(result) =
+        format_modifiers::format_with_modifiers_if_present(date, format_string, config)
+    {
+        return result.map_err(|e| e.to_string());
     }
 
-    let fmt = localize_format_string(format_string, date.date());
-    broken_down.to_string_with_config(config, &fmt)
+    let broken_down = BrokenDownTime::from(date);
+
+    let result = if !should_use_icu_locale() || skip_localization {
+        broken_down.to_string_with_config(config, format_string)
+    } else {
+        let fmt = localize_format_string(format_string, date.date());
+        broken_down.to_string_with_config(config, &fmt)
+    };
+
+    result.map_err(|e| e.to_string())
 }
 
 /// Return the appropriate format string for the given settings.
