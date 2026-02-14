@@ -208,6 +208,8 @@ fn apply_modifiers(value: &str, flags: &str, width: usize, _spec: &str) -> Strin
     }
 
     // Apply force sign for numeric values
+    // Note: When + flag is used, we add the sign BEFORE applying width padding
+    // so that for space padding, the space goes after the sign (e.g., "+ 1970")
     if force_sign && !result.starts_with('+') && !result.starts_with('-') {
         if result.chars().next().is_some_and(|c| c.is_numeric()) {
             result.insert(0, '+');
@@ -220,12 +222,21 @@ fn apply_modifiers(value: &str, flags: &str, width: usize, _spec: &str) -> Strin
         if left_align {
             result.push_str(&" ".repeat(padding));
         } else {
-            // For space/zero padding with signed values, put sign first then pad
-            if result.starts_with('+') || result.starts_with('-') {
+            // Determine where to place padding based on pad_char and sign
+            let has_sign = result.starts_with('+') || result.starts_with('-');
+
+            if pad_char == '0' && has_sign {
+                // Zero padding: sign first, then zeros (e.g., "-0022")
                 let sign = result.chars().next().unwrap();
                 let rest = &result[1..];
-                result = format!("{sign}{}{rest}", pad_char.to_string().repeat(padding));
+                result = format!("{sign}{}{rest}", "0".repeat(padding));
+            } else if pad_char == ' ' && force_sign && has_sign {
+                // Space padding with forced sign: sign first, then spaces (e.g., "+ 1970")
+                let sign = result.chars().next().unwrap();
+                let rest = &result[1..];
+                result = format!("{sign}{}{rest}", " ".repeat(padding));
             } else {
+                // Default: pad on the left (e.g., "  -22" or "  1999")
                 result = format!("{}{result}", pad_char.to_string().repeat(padding));
             }
         }
@@ -366,5 +377,22 @@ mod tests {
         // Should detect flag without width
         let result = format_with_modifiers_if_present(&date, "%^B", &config);
         assert!(result.is_some());
+    }
+
+    #[test]
+    fn test_negative_values_with_space_padding() {
+        // Test case from GNU test: neg-secs2
+        // Format: %_5s with value -22 should produce "  -22" (space-padded)
+        use jiff::Timestamp;
+
+        let ts = Timestamp::from_second(-22).unwrap();
+        let date = ts.to_zoned(TimeZone::UTC);
+        let config = get_config();
+
+        let result = format_with_modifiers(&date, "%_5s", &config).unwrap();
+        assert_eq!(
+            result, "  -22",
+            "Space padding should pad before the sign for negative numbers"
+        );
     }
 }
