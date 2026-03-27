@@ -12,8 +12,6 @@
 
 #[cfg(unix)]
 use nix::errno::Errno;
-#[cfg(any(target_os = "linux", target_os = "android"))]
-use nix::libc;
 #[cfg(unix)]
 use nix::sys::signal::{
     SaFlags, SigAction, SigHandler, SigHandler::SigDfl, SigHandler::SigIgn, SigSet, Signal,
@@ -532,7 +530,6 @@ static SIGPIPE_WAS_IGNORED: AtomicBool = AtomicBool::new(false);
 #[cfg(unix)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn capture_startup_state() {
-    use nix::libc;
     use std::mem::MaybeUninit;
     use std::ptr;
 

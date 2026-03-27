@@ -52,8 +52,6 @@ pub fn mute_sigpipe_panic() {
 /// variable. If set to "default", it restores SIGPIPE to SIG_DFL.
 #[cfg(unix)]
 pub fn preserve_inherited_sigpipe() {
-    use nix::libc;
-
     // Check if parent specified that SIGPIPE should be default
     if let Ok(val) = std::env::var("RUST_SIGPIPE") {
         if val == "default" {

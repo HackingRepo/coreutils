@@ -44,6 +44,7 @@ regex = { workspace = true }
 uucore = { workspace = true, features = ["parser", "i18n-datetime"] }
 
 [target.'cfg(unix)'.dependencies]
+libc = { workspace = true }
 nix = { workspace = true, features = ["time"] }
 
 [target.'cfg(windows)'.dependencies]

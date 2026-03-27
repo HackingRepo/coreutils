@@ -16,7 +16,7 @@ use jiff::fmt::strtime;
 use jiff::tz::TimeZone;
 use jiff::{Timestamp, ToSpan, Zoned};
 #[cfg(unix)]
-use nix::libc::O_NONBLOCK;
+use libc::O_NONBLOCK;
 #[cfg(unix)]
 use nix::sys::stat::futimens;
 #[cfg(unix)]

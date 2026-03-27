@@ -3431,6 +3431,7 @@ dependencies = [
  "icu_locale",
  "jiff",
  "jiff-icu",
+ "libc",
  "nix",
  "parse_datetime",
  "regex",
@@ -3525,6 +3526,7 @@ version = "0.8.0"
 dependencies = [
  "clap",
  "fluent",
+ "libc",
  "nix",
  "rust-ini",
  "thiserror 2.0.18",
@@ -3778,6 +3780,7 @@ version = "0.8.0"
 dependencies = [
  "clap",
  "fluent",
+ "libc",
  "nix",
  "uucore",
 ]
@@ -4136,6 +4139,7 @@ dependencies = [
  "fluent",
  "foldhash 0.2.0",
  "itertools 0.14.0",
+ "libc",
  "memchr",
  "nix",
  "rand 0.10.0",
@@ -4196,6 +4200,7 @@ dependencies = [
  "cfg_aliases",
  "clap",
  "fluent",
+ "libc",
  "nix",
  "uucore",
 ]
@@ -4291,6 +4296,7 @@ dependencies = [
  "filetime",
  "fluent",
  "jiff",
+ "libc",
  "nix",
  "parse_datetime",
  "tempfile",
