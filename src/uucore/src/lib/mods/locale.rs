@@ -140,8 +140,7 @@ fn find_uucore_locales_dir(utility_locales_dir: &Path) -> Option<PathBuf> {
     #[cfg(not(debug_assertions))]
     {
         let _ = utility_locales_dir; // suppress unused warning
-        let base = option_env!("UUTILS_LOCALE_DIR").unwrap_or("/usr/share/coreutils/locales");
-        let uucore_locales = PathBuf::from(base).join("uucore");
+        let uucore_locales = PathBuf::from(locale_base_dir()).join("uucore");
         uucore_locales.exists().then_some(uucore_locales)
     }
 }
@@ -474,10 +473,17 @@ pub fn setup_localization(p: &str) -> Result<(), LocalizationError> {
     Ok(())
 }
 
+/// Returns the compile-time configured locale base directory.
+///
+/// Packagers can set `UUTILS_LOCALE_DIR` at build time to override the default.
+#[cfg(not(debug_assertions))]
+fn locale_base_dir() -> &'static str {
+    option_env!("UUTILS_LOCALE_DIR").unwrap_or("/usr/share/coreutils/locales")
+}
+
 #[cfg(not(debug_assertions))]
 fn resolve_locales_dir(p: &str) -> Option<PathBuf> {
-    let base = option_env!("UUTILS_LOCALE_DIR").unwrap_or("/usr/share/coreutils/locales");
-    let locales_dir = PathBuf::from(base).join(p);
+    let locales_dir = PathBuf::from(locale_base_dir()).join(p);
     locales_dir.exists().then_some(locales_dir)
 }
 
@@ -517,9 +523,9 @@ fn get_locales_dir(p: &str) -> Result<PathBuf, LocalizationError> {
             return Ok(dir);
         }
 
-        let base = option_env!("UUTILS_LOCALE_DIR").unwrap_or("/usr/share/coreutils/locales");
         Err(LocalizationError::LocalesDirNotFound(format!(
-            "Locales directory not found at {base}/{p}"
+            "Locales directory not found at {}/{p}",
+            locale_base_dir()
         )))
     }
 }
@@ -1441,8 +1447,7 @@ mod fhs_tests {
         // when the directory exists on the system.
         let result = resolve_locales_dir("cut");
         if let Some(dir) = result {
-            let base = option_env!("UUTILS_LOCALE_DIR").unwrap_or("/usr/share/coreutils/locales");
-            assert_eq!(dir, PathBuf::from(base).join("cut"));
+            assert_eq!(dir, PathBuf::from(locale_base_dir()).join("cut"));
         }
         // If the directory doesn't exist, result is None — expected in CI
     }

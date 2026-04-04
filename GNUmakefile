@@ -256,11 +256,13 @@ INSTALLEES_WITH_EXTRA_LOCALE = \
 	$(INSTALLEES) \
 	$(if $(findstring sum, $(INSTALLEES)),checksum_common, )
 install-locales:
-	@# Install uucore common locales
+	@# Install uucore common locales (skip en-US.ftl, it is embedded at compile time)
 	@if [ -d "$(BASEDIR)/src/uucore/locales" ]; then \
 		mkdir -p "$(DESTDIR)$(LOCALEDIR)/uucore"; \
 		for locale_file in "$(BASEDIR)"/src/uucore/locales/*.ftl; do \
-			$(INSTALL) -m 644 "$$locale_file" "$(DESTDIR)$(LOCALEDIR)/uucore/"; \
+			if [ "$$(basename "$$locale_file")" != "en-US.ftl" ]; then \
+				$(INSTALL) -m 644 "$$locale_file" "$(DESTDIR)$(LOCALEDIR)/uucore/"; \
+			fi; \
 		done; \
 	fi
 	@for prog in $(INSTALLEES_WITH_EXTRA_LOCALE); do \
