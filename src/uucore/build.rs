@@ -76,6 +76,7 @@ fn generate_examples(out_dir: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     let mut examples_file = File::create(Path::new(out_dir).join("examples_map.rs"))?;
     writeln!(examples_file, "// Generated at compile time - do not edit")?;
+    writeln!(examples_file, "#[allow(clippy::match_single_binding)]")?;
     writeln!(
         examples_file,
         "/// Returns the tldr examples for a given utility name, if available."
