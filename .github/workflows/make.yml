@@ -126,6 +126,25 @@ jobs:
         test -f /tmp/usr/local/share/zsh/site-functions/_b2sum
         test -f /tmp/usr/local/share/bash-completion/completions/head.bash
         test -f /tmp/usr/local/share/fish/vendor_completions.d/cat.fish
+        # Check that locales are installed (uucore + at least one utility)
+        test -d /tmp/usr/local/share/coreutils/locales/uucore
+        locale_count=$(find /tmp/usr/local/share/coreutils/locales -name '*.ftl' | wc -l)
+        echo "Installed $locale_count locale files"
+        test "$locale_count" -gt 0
+      env:
+        RUST_BACKTRACE: "1"
+    - name: "`make install` with custom LOCALEDIR"
+      shell: bash
+      run: |
+        set -x
+        # Verify LOCALEDIR is configurable (eliminates need for distro patches)
+        DESTDIR=/tmp/custom-locale make PROFILE=release LOCALEDIR=/usr/share/mylocales install
+        # Check that locales are installed at the custom path
+        test -d /tmp/custom-locale/usr/share/mylocales/uucore
+        test $(find /tmp/custom-locale/usr/share/mylocales -name '*.ftl' | wc -l) -gt 0
+        # Ensure default path was NOT used
+        ! test -d /tmp/custom-locale/usr/local/share/coreutils/locales
+        rm -rf /tmp/custom-locale
       env:
         RUST_BACKTRACE: "1"
     - name: "`make uninstall`"

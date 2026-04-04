@@ -15,6 +15,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::OnceLock;
 
+#[cfg(any(debug_assertions, test))]
 use os_display::Quotable;
 use thiserror::Error;
 use unic_langid::LanguageIdentifier;
