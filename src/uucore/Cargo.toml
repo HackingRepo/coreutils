@@ -107,6 +107,9 @@ nix = { workspace = true, features = [
 walkdir = { workspace = true, optional = true }
 xattr = { workspace = true, optional = true }
 
+[build-dependencies]
+zip = { workspace = true, optional = true }
+
 [dev-dependencies]
 tempfile = { workspace = true }
 
@@ -205,3 +208,4 @@ tty = []
 time = ["jiff"]
 uptime = ["jiff", "libc", "windows-sys", "utmpx", "utmp-classic"]
 benchmark = ["divan", "itertools", "tempfile"]
+examples = ["zip"]

@@ -3,6 +3,8 @@
 // For the full copyright and license information, please view the LICENSE
 // file that was distributed with this source code.
 
+// spell-checker:ignore (vars) tldr
+
 use std::env;
 use std::fs::File;
 use std::io::Write;
@@ -54,7 +56,118 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     writeln!(embedded_file, "}}")?;
 
     embedded_file.flush()?;
+
+    #[cfg(feature = "examples")]
+    generate_examples(&out_dir)?;
+
     Ok(())
+}
+
+/// Generate embedded tldr examples for utilities.
+///
+/// Reads `docs/tldr.zip` and generates a Rust file with a match statement
+/// mapping utility names to their formatted example text.
+#[cfg(feature = "examples")]
+fn generate_examples(out_dir: &str) -> Result<(), Box<dyn std::error::Error>> {
+    use std::io::Read;
+
+    let project_root = project_root()?;
+    let tldr_path = project_root.join("docs/tldr.zip");
+
+    let mut examples_file = File::create(Path::new(out_dir).join("examples_map.rs"))?;
+    writeln!(examples_file, "// Generated at compile time - do not edit")?;
+    writeln!(
+        examples_file,
+        "/// Returns the tldr examples for a given utility name, if available."
+    )?;
+    writeln!(
+        examples_file,
+        "pub fn get_examples(util_name: &str) -> Option<&'static str> {{"
+    )?;
+    writeln!(examples_file, "    match util_name {{")?;
+
+    if tldr_path.exists() {
+        println!("cargo:rerun-if-changed={}", tldr_path.display());
+
+        let file = File::open(&tldr_path)?;
+        let mut archive = zip::ZipArchive::new(std::io::BufReader::new(file))?;
+
+        // Collect all utility names from pages/common/ and pages/linux/
+        let mut entries: std::collections::HashMap<String, String> =
+            std::collections::HashMap::new();
+
+        for i in 0..archive.len() {
+            let mut entry = archive.by_index(i)?;
+            let name = entry.name().to_string();
+
+            let util_name = if let Some(n) = name.strip_prefix("pages/common/") {
+                n.strip_suffix(".md")
+            } else if let Some(n) = name.strip_prefix("pages/linux/") {
+                n.strip_suffix(".md")
+            } else {
+                None
+            };
+
+            if let Some(util_name) = util_name {
+                // Don't overwrite common with linux (common takes priority)
+                if entries.contains_key(util_name) {
+                    continue;
+                }
+                let mut content = String::new();
+                entry.read_to_string(&mut content)?;
+                if let Ok(formatted) = format_tldr_examples(&content) {
+                    entries.insert(util_name.to_string(), formatted);
+                }
+            }
+        }
+
+        let mut sorted_entries: Vec<_> = entries.into_iter().collect();
+        sorted_entries.sort_by(|a, b| a.0.cmp(&b.0));
+
+        for (util_name, formatted) in &sorted_entries {
+            let escaped = formatted.replace('\\', "\\\\").replace('"', "\\\"");
+            writeln!(
+                examples_file,
+                "        \"{util_name}\" => Some(\"{escaped}\"),"
+            )?;
+        }
+    }
+
+    writeln!(examples_file, "        _ => None,")?;
+    writeln!(examples_file, "    }}")?;
+    writeln!(examples_file, "}}")?;
+
+    examples_file.flush()?;
+    Ok(())
+}
+
+/// Format tldr markdown content into plain text examples for terminal display.
+#[cfg(feature = "examples")]
+fn format_tldr_examples(content: &str) -> Result<String, std::fmt::Error> {
+    use std::fmt::Write;
+    let mut s = String::new();
+
+    writeln!(s, "Examples:")?;
+    writeln!(s)?;
+    for line in content.lines().skip_while(|l| !l.starts_with('-')) {
+        if let Some(l) = line.strip_prefix("- ") {
+            writeln!(s, "  {l}")?;
+        } else if line.starts_with('`') {
+            writeln!(s, "    {}", line.trim_matches('`'))?;
+        } else if line.is_empty() {
+            writeln!(s)?;
+        }
+    }
+    writeln!(s)?;
+    writeln!(
+        s,
+        "  These examples are provided by the tldr-pages project (https://tldr.sh)."
+    )?;
+    writeln!(
+        s,
+        "  They may differ slightly from the uutils version of this command."
+    )?;
+    Ok(s)
 }
 
 /// Get the project root directory

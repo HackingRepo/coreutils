@@ -49,7 +49,7 @@ pub fn main() {
                 "nightly" | "test_unimplemented" | "expensive_tests" | "test_risky_names" => {
                     continue;
                 } // crate-local custom features
-                "uudoc" => continue, // is not a utility
+                "uudoc" | "examples" => continue, // not utilities
                 "test" => continue, // over-ridden with 'uu_test' to avoid collision with rust core crate 'test'
                 s if s.starts_with(FEATURE_PREFIX) => continue, // crate feature sets
                 _ => {}             // util feature name

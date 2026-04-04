@@ -936,3 +936,13 @@ fn test_cat_eintr_handling() {
     // Verify that the interruption was encountered and handled
     assert_eq!(*interrupt_count.lock().unwrap(), 1);
 }
+
+#[cfg(feature = "examples")]
+#[test]
+fn test_examples_flag() {
+    new_ucmd!()
+        .arg("--examples")
+        .succeeds()
+        .stdout_contains("Examples:")
+        .stdout_contains("cat");
+}

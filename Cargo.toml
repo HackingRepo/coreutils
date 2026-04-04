@@ -38,6 +38,8 @@ uudoc = [
   "dep:regex",
   "dep:zip",
 ]
+# "examples" == embed tldr examples and enable --examples flag for each utility
+examples = ["uucore/examples"]
 ## features
 ## Optional feature for stdbuf
 # "feat_external_libstdbuf" == use an external libstdbuf.so for stdbuf instead of embedding it

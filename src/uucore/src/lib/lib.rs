@@ -46,6 +46,8 @@ pub use crate::features::checksum;
 pub use crate::features::colors;
 #[cfg(feature = "encoding")]
 pub use crate::features::encoding;
+#[cfg(feature = "examples")]
+pub use crate::features::examples;
 #[cfg(feature = "extendedbigdecimal")]
 pub use crate::features::extendedbigdecimal;
 #[cfg(feature = "fast-inc")]
@@ -208,6 +210,21 @@ macro_rules! bin {
                     }
                     std::process::exit(99)
                 });
+
+            // Handle --examples flag before dispatching to the utility
+            #[cfg(feature = "examples")]
+            {
+                let args: Vec<_> = uucore::args_os().collect();
+                if args.iter().any(|a| a == "--examples") {
+                    let util_name =
+                        uucore::get_canonical_util_name(stringify!($util));
+                    let found = uucore::examples::print_examples(util_name);
+                    if let Err(e) = std::io::stdout().flush() {
+                        eprintln!("Error flushing stdout: {e}");
+                    }
+                    std::process::exit(if found { 0 } else { 1 });
+                }
+            }
 
             // execute utility code
             let code = $util::uumain(uucore::args_os());

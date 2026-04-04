@@ -114,6 +114,22 @@ fn main() {
             _ => {}
         }
 
+        // Handle --examples flag before dispatching to utility
+        #[cfg(feature = "examples")]
+        {
+            // Check raw args from env to avoid consuming the iterator
+            let has_examples = std::env::args_os().any(|a| a == "--examples");
+            if has_examples {
+                if let Some(_) = utils.get(util) {
+                    let found = uucore::examples::print_examples(util);
+                    if let Err(e) = io::stdout().flush() {
+                        let _ = writeln!(io::stderr(), "coreutils: {}", strip_errno(&e));
+                    }
+                    process::exit(if found { 0 } else { 1 });
+                }
+            }
+        }
+
         match utils.get(util) {
             Some(&(uumain, _)) => {
                 // TODO: plug the deactivation of the translation
