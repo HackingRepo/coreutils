@@ -138,10 +138,10 @@ jobs:
       run: |
         set -x
         # Verify LOCALEDIR is configurable (eliminates need for distro patches)
-        DESTDIR=/tmp/custom-locale make PROFILE=release LOCALEDIR=/usr/share/mylocales install
+        DESTDIR=/tmp/custom-locale make PROFILE=release LOCALEDIR=/usr/share/custom-locales install
         # Check that locales are installed at the custom path
-        test -d /tmp/custom-locale/usr/share/mylocales/uucore
-        test $(find /tmp/custom-locale/usr/share/mylocales -name '*.ftl' | wc -l) -gt 0
+        test -d /tmp/custom-locale/usr/share/custom-locales/uucore
+        test $(find /tmp/custom-locale/usr/share/custom-locales -name '*.ftl' | wc -l) -gt 0
         # Ensure default path was NOT used
         ! test -d /tmp/custom-locale/usr/local/share/coreutils/locales
         rm -rf /tmp/custom-locale
