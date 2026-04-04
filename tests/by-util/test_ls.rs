@@ -7133,3 +7133,13 @@ fn test_ls_non_utf8_hidden() {
 
     scene.ucmd().succeeds().stdout_does_not_contain(".hidden");
 }
+
+#[cfg(feature = "examples")]
+#[test]
+fn test_examples_flag() {
+    new_ucmd!()
+        .arg("--examples")
+        .succeeds()
+        .stdout_contains("Examples:")
+        .stdout_contains("ls");
+}

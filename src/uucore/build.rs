@@ -116,7 +116,8 @@ fn generate_examples(out_dir: &str) -> Result<(), Box<dyn std::error::Error>> {
                 }
                 let mut content = String::new();
                 entry.read_to_string(&mut content)?;
-                if let Ok(formatted) = format_tldr_examples(&content) {
+                let formatted = format_tldr_examples(&content);
+                if !formatted.is_empty() {
                     entries.insert(util_name.to_string(), formatted);
                 }
             }
@@ -144,31 +145,34 @@ fn generate_examples(out_dir: &str) -> Result<(), Box<dyn std::error::Error>> {
 
 /// Format tldr markdown content into plain text examples for terminal display.
 #[cfg(feature = "examples")]
-fn format_tldr_examples(content: &str) -> Result<String, std::fmt::Error> {
+fn format_tldr_examples(content: &str) -> String {
     use std::fmt::Write;
     let mut s = String::new();
 
-    writeln!(s, "Examples:")?;
-    writeln!(s)?;
+    // writeln! on String is infallible, unwrap is safe
+    writeln!(s, "Examples:").unwrap();
+    writeln!(s).unwrap();
     for line in content.lines().skip_while(|l| !l.starts_with('-')) {
         if let Some(l) = line.strip_prefix("- ") {
-            writeln!(s, "  {l}")?;
+            writeln!(s, "  {l}").unwrap();
         } else if line.starts_with('`') {
-            writeln!(s, "    {}", line.trim_matches('`'))?;
+            writeln!(s, "    {}", line.trim_matches('`')).unwrap();
         } else if line.is_empty() {
-            writeln!(s)?;
+            writeln!(s).unwrap();
         }
     }
-    writeln!(s)?;
+    writeln!(s).unwrap();
     writeln!(
         s,
         "  These examples are provided by the tldr-pages project (https://tldr.sh)."
-    )?;
+    )
+    .unwrap();
     writeln!(
         s,
         "  They may differ slightly from the uutils version of this command."
-    )?;
-    Ok(s)
+    )
+    .unwrap();
+    s
 }
 
 /// Get the project root directory
