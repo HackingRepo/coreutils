@@ -1441,8 +1441,7 @@ mod fhs_tests {
         // when the directory exists on the system.
         let result = resolve_locales_dir("cut");
         if let Some(dir) = result {
-            let base = option_env!("UUTILS_LOCALE_DIR")
-                .unwrap_or("/usr/share/coreutils/locales");
+            let base = option_env!("UUTILS_LOCALE_DIR").unwrap_or("/usr/share/coreutils/locales");
             assert_eq!(dir, PathBuf::from(base).join("cut"));
         }
         // If the directory doesn't exist, result is None — expected in CI
