@@ -82,6 +82,7 @@ fn detect_target_utility() -> Option<String> {
 
     // Tell Cargo to rerun if this environment variable changes
     println!("cargo:rerun-if-env-changed=UUCORE_TARGET_UTIL");
+    println!("cargo:rerun-if-env-changed=UUTILS_LOCALE_DIR");
 
     // First check if an explicit environment variable was set
     if let Ok(target_util) = env::var("UUCORE_TARGET_UTIL") {

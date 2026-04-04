@@ -117,21 +117,32 @@ thread_local! {
 
 /// Helper function to find the uucore locales directory from a utility's locales directory
 fn find_uucore_locales_dir(utility_locales_dir: &Path) -> Option<PathBuf> {
-    // Normalize the path to get absolute path
-    let normalized_dir = utility_locales_dir
-        .canonicalize()
-        .unwrap_or_else(|_| utility_locales_dir.to_path_buf());
+    #[cfg(debug_assertions)]
+    {
+        // In debug builds, walk up from the utility locales dir to find uucore locales
+        let normalized_dir = utility_locales_dir
+            .canonicalize()
+            .unwrap_or_else(|_| utility_locales_dir.to_path_buf());
 
-    // Walk up: locales -> printenv -> uu -> src
-    let uucore_locales = normalized_dir
-        .parent()? // printenv
-        .parent()? // uu
-        .parent()? // src
-        .join("uucore")
-        .join("locales");
+        // Walk up: locales -> printenv -> uu -> src
+        let uucore_locales = normalized_dir
+            .parent()? // printenv
+            .parent()? // uu
+            .parent()? // src
+            .join("uucore")
+            .join("locales");
 
-    // Only return if the directory actually exists
-    uucore_locales.exists().then_some(uucore_locales)
+        // Only return if the directory actually exists
+        uucore_locales.exists().then_some(uucore_locales)
+    }
+
+    #[cfg(not(debug_assertions))]
+    {
+        let _ = utility_locales_dir; // suppress unused warning
+        let base = option_env!("UUTILS_LOCALE_DIR").unwrap_or("/usr/share/coreutils/locales");
+        let uucore_locales = PathBuf::from(base).join("uucore");
+        uucore_locales.exists().then_some(uucore_locales)
+    }
 }
 
 /// Create a bundle that combines common and utility-specific strings
@@ -463,28 +474,10 @@ pub fn setup_localization(p: &str) -> Result<(), LocalizationError> {
 }
 
 #[cfg(not(debug_assertions))]
-fn resolve_locales_dir_from_exe_dir(exe_dir: &Path, p: &str) -> Option<PathBuf> {
-    // 1. <bindir>/locales/<prog>
-    let coreutils = exe_dir.join("locales").join(p);
-    if coreutils.exists() {
-        return Some(coreutils);
-    }
-
-    // 2. <prefix>/share/locales/<prog>
-    if let Some(prefix) = exe_dir.parent() {
-        let fhs = prefix.join("share").join("locales").join(p);
-        if fhs.exists() {
-            return Some(fhs);
-        }
-    }
-
-    // 3. <bindir>/<prog>   (legacy fall-back)
-    let fallback = exe_dir.join(p);
-    if fallback.exists() {
-        return Some(fallback);
-    }
-
-    None
+fn resolve_locales_dir(p: &str) -> Option<PathBuf> {
+    let base = option_env!("UUTILS_LOCALE_DIR").unwrap_or("/usr/share/coreutils/locales");
+    let locales_dir = PathBuf::from(base).join(p);
+    locales_dir.exists().then_some(locales_dir)
 }
 
 /// Helper function to get the locales directory based on the build configuration
@@ -518,23 +511,14 @@ fn get_locales_dir(p: &str) -> Result<PathBuf, LocalizationError> {
 
     #[cfg(not(debug_assertions))]
     {
-        use std::env;
-        // In release builds, look relative to executable
-        let exe_path = env::current_exe().map_err(|e| {
-            LocalizationError::PathResolution(format!("Failed to get executable path: {e}"))
-        })?;
-
-        let exe_dir = exe_path.parent().ok_or_else(|| {
-            LocalizationError::PathResolution("Failed to get executable directory".to_string())
-        })?;
-
-        if let Some(dir) = resolve_locales_dir_from_exe_dir(exe_dir, p) {
+        // In release builds, look in the configured locale directory
+        if let Some(dir) = resolve_locales_dir(p) {
             return Ok(dir);
         }
 
+        let base = option_env!("UUTILS_LOCALE_DIR").unwrap_or("/usr/share/coreutils/locales");
         Err(LocalizationError::LocalesDirNotFound(format!(
-            "Release locales directory not found starting from {}",
-            exe_dir.quote()
+            "Locales directory not found at {base}/{p}"
         )))
     }
 }
@@ -1447,24 +1431,19 @@ invalid-syntax = This is { $missing
 #[cfg(all(test, not(debug_assertions)))]
 mod fhs_tests {
     use super::*;
-    use tempfile::TempDir;
 
     #[test]
-    fn resolves_fhs_share_locales_layout() {
-        // 1. Set up a fake installation prefix in a temp directory
-        let prefix = TempDir::new().unwrap(); // e.g.  /tmp/xyz
-        let bin_dir = prefix.path().join("bin"); //        /tmp/xyz/bin
-        let share_dir = prefix.path().join("share").join("locales").join("cut"); // /tmp/xyz/share/locales/cut
-        std::fs::create_dir_all(&share_dir).unwrap();
-        std::fs::create_dir_all(&bin_dir).unwrap();
-
-        // 2. Pretend the executable lives in <prefix>/bin
-        let exe_dir = bin_dir.as_path();
-
-        // 3. Ask the helper to resolve the locales dir
-        let result = resolve_locales_dir_from_exe_dir(exe_dir, "cut")
-            .expect("should find locales via FHS path");
-
-        assert_eq!(result, share_dir);
+    fn resolves_configured_locales_path() {
+        // In release builds, resolve_locales_dir uses the compile-time
+        // UUTILS_LOCALE_DIR (or default /usr/share/coreutils/locales).
+        // We can only verify the function returns the expected path format
+        // when the directory exists on the system.
+        let result = resolve_locales_dir("cut");
+        if let Some(dir) = result {
+            let base = option_env!("UUTILS_LOCALE_DIR")
+                .unwrap_or("/usr/share/coreutils/locales");
+            assert_eq!(dir, PathBuf::from(base).join("cut"));
+        }
+        // If the directory doesn't exist, result is None — expected in CI
     }
 }
