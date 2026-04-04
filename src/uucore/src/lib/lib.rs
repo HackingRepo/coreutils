@@ -216,8 +216,7 @@ macro_rules! bin {
             {
                 let args: Vec<_> = uucore::args_os().collect();
                 if args.iter().any(|a| a == "--examples") {
-                    let util_name =
-                        uucore::get_canonical_util_name(stringify!($util));
+                    let util_name = uucore::get_canonical_util_name(stringify!($util));
                     let found = uucore::examples::print_examples(util_name);
                     if let Err(e) = std::io::stdout().flush() {
                         eprintln!("Error flushing stdout: {e}");
