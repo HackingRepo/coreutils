@@ -203,15 +203,13 @@ pub fn uu_app() -> Command {
                 .short('p')
                 .long(options::PROCESSOR)
                 .help(translate!("uname-help-processor"))
-                .action(ArgAction::SetTrue)
-                .hide(true),
+                .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new(options::HARDWARE_PLATFORM)
                 .short('i')
                 .long(options::HARDWARE_PLATFORM)
                 .help(translate!("uname-help-hardware-platform"))
-                .action(ArgAction::SetTrue)
-                .hide(true),
+                .action(ArgAction::SetTrue),
         )
 }
