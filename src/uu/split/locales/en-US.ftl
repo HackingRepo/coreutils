@@ -60,3 +60,4 @@ split-help-hex-suffixes = same as -x, but allow setting the start value
 split-help-suffix-length = generate suffixes of length N (default 2)
 split-help-verbose = print a diagnostic just before each output file is opened
 split-help-separator = use SEP instead of newline as the record separator; '\\0' (zero) specifies the NUL character
+split-help-unbuffered = immediately copy input to output (accepted for compatibility; no-op)

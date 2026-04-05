@@ -44,6 +44,7 @@ static OPT_VERBOSE: &str = "verbose";
 static OPT_SEPARATOR: &str = "separator";
 static OPT_ELIDE_EMPTY_FILES: &str = "elide-empty-files";
 static OPT_IO_BLKSIZE: &str = "-io-blksize";
+static OPT_UNBUFFERED: &str = "unbuffered";
 
 static ARG_INPUT: &str = "input";
 static ARG_PREFIX: &str = "prefix";
@@ -380,6 +381,14 @@ pub fn uu_app() -> Command {
                 .long("io-blksize")
                 .alias(OPT_IO_BLKSIZE)
                 .hide(true),
+        )
+        .arg(
+            // Accepted for GNU compatibility; split has no buffering to disable.
+            Arg::new(OPT_UNBUFFERED)
+                .short('u')
+                .long(OPT_UNBUFFERED)
+                .help(translate!("split-help-unbuffered"))
+                .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new(ARG_INPUT)

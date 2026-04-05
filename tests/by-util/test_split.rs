@@ -2104,3 +2104,25 @@ fn test_split_directory_already_exists() {
         .no_stdout()
         .stderr_is("split: 'xaa': Is a directory\n");
 }
+
+#[test]
+fn test_help_lists_unbuffered() {
+    // Regression test for GNU tests/misc/getopt_vs_usage.sh: -u/--unbuffered
+    // must appear in --help even though split treats it as a no-op for GNU
+    // compatibility.
+    let result = new_ucmd!().arg("--help").succeeds();
+    let out = result.stdout_str();
+    assert!(out.contains(" -u"), "--help should mention -u");
+    assert!(
+        out.contains("--unbuffered"),
+        "--help should mention --unbuffered"
+    );
+}
+
+#[test]
+fn test_unbuffered_is_accepted() {
+    // -u is a no-op; accepting it must not break normal operation.
+    let (at, mut ucmd) = at_and_ucmd!();
+    at.write("file", "a\nb\nc\n");
+    ucmd.args(&["-u", "-l", "1", "file"]).succeeds().no_stderr();
+}

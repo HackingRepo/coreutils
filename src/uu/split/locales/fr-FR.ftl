@@ -59,3 +59,4 @@ split-help-hex-suffixes = identique à -x, mais permet de définir la valeur de 
 split-help-suffix-length = générer des suffixes de longueur N (par défaut 2)
 split-help-verbose = afficher un diagnostic juste avant l'ouverture de chaque fichier de sortie
 split-help-separator = utiliser SEP au lieu de nouvelle ligne comme séparateur d'enregistrement ; '\\0' (zéro) spécifie le caractère NUL
+split-help-unbuffered = copier immédiatement l'entrée vers la sortie (accepté pour compatibilité ; sans effet)
