@@ -2660,3 +2660,26 @@ fn test_install_d_symlink_race_condition_concurrent() {
         "Intermediate directory should be a real directory, not a symlink"
     );
 }
+
+#[test]
+fn test_install_help_lists_debug() {
+    // Regression test for GNU tests/misc/getopt_vs_usage.sh.
+    new_ucmd!()
+        .arg("--help")
+        .succeeds()
+        .stdout_contains("--debug");
+}
+
+#[test]
+fn test_install_debug_implies_verbose() {
+    // GNU install: --debug implies -v. Until uutils implements copy-strategy
+    // tracing, --debug is accepted and behaves as --verbose.
+    let (at, mut ucmd) = at_and_ucmd!();
+    at.touch("src");
+    ucmd.arg("--debug")
+        .arg("src")
+        .arg("dst")
+        .succeeds()
+        .stdout_contains("'src' -> 'dst'");
+    assert!(at.file_exists("dst"));
+}

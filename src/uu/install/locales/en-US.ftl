@@ -16,6 +16,7 @@ install-help-strip-program = program used to strip binaries
 install-help-target-directory = move all SOURCE arguments into DIRECTORY
 install-help-no-target-directory = treat DEST as a normal file
 install-help-verbose = explain what is being done
+install-help-debug = explain how a file is copied. Implies -v
 install-help-preserve-context = preserve security context
 install-help-context = set security context of files and directories
 install-help-default-context = set SELinux security context of destination file and each created directory to default type

@@ -164,6 +164,7 @@ static OPT_STRIP_PROGRAM: &str = "strip-program";
 static OPT_TARGET_DIRECTORY: &str = "target-directory";
 static OPT_NO_TARGET_DIRECTORY: &str = "no-target-directory";
 static OPT_VERBOSE: &str = "verbose";
+static OPT_DEBUG: &str = "debug";
 static OPT_PRESERVE_CONTEXT: &str = "preserve-context";
 static OPT_CONTEXT: &str = "context";
 static OPT_DEFAULT_CONTEXT: &str = "default-context";
@@ -292,6 +293,15 @@ pub fn uu_app() -> Command {
                 .short('v')
                 .long(OPT_VERBOSE)
                 .help(translate!("install-help-verbose"))
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            // GNU install's --debug explains how a file is copied and implies -v.
+            // uutils install does not currently surface copy-strategy details,
+            // so treat --debug as an alias for --verbose for compatibility.
+            Arg::new(OPT_DEBUG)
+                .long(OPT_DEBUG)
+                .help(translate!("install-help-debug"))
                 .action(ArgAction::SetTrue),
         )
         .arg(
@@ -434,7 +444,7 @@ fn behavior(matches: &ArgMatches) -> UResult<Behavior> {
         suffix: backup_control::determine_backup_suffix(matches),
         owner_id,
         group_id,
-        verbose: matches.get_flag(OPT_VERBOSE),
+        verbose: matches.get_flag(OPT_VERBOSE) || matches.get_flag(OPT_DEBUG),
         preserve_timestamps,
         compare,
         strip,
