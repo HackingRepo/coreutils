@@ -417,3 +417,13 @@ fn test_invalid_regex_word_trailing_backslash() {
 fn test_invalid_regex_word_unclosed_group() {
     new_ucmd!().args(&["-W", "(wrong"]).succeeds().no_stderr();
 }
+
+#[test]
+fn test_help_lists_format() {
+    // Regression test for GNU tests/misc/getopt_vs_usage.sh: --format must
+    // be visible in --help output, matching GNU ptx.
+    new_ucmd!()
+        .arg("--help")
+        .succeeds()
+        .stdout_contains("--format");
+}

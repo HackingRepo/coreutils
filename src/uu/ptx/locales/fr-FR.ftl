@@ -12,6 +12,7 @@ ptx-help-flag-truncation = utiliser CHAÎNE pour marquer les troncatures de lign
 ptx-help-macro-name = nom de macro à utiliser au lieu de 'xx'
 ptx-help-roff = générer la sortie comme directives roff
 ptx-help-tex = générer la sortie comme directives TeX
+ptx-help-format = générer la sortie dans le FORMAT (roff ou tex)
 ptx-help-right-side-refs = mettre les références à droite, non comptées dans -w
 ptx-help-sentence-regexp = pour la fin de lignes ou la fin de phrases
 ptx-help-word-regexp = utiliser REGEXP pour correspondre à chaque mot-clé

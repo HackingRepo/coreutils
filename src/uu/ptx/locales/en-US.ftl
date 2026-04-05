@@ -12,6 +12,7 @@ ptx-help-flag-truncation = use STRING for flagging line truncations
 ptx-help-macro-name = macro name to use instead of 'xx'
 ptx-help-roff = generate output as roff directives
 ptx-help-tex = generate output as TeX directives
+ptx-help-format = generate output in FORMAT (roff or tex)
 ptx-help-right-side-refs = put references at right, not counted in -w
 ptx-help-sentence-regexp = for end of lines or end of sentences
 ptx-help-word-regexp = use REGEXP to match each keyword

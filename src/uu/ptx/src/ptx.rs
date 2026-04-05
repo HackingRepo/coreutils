@@ -997,7 +997,8 @@ pub fn uu_app() -> Command {
         .arg(
             Arg::new(options::FORMAT)
                 .long(options::FORMAT)
-                .hide(true)
+                .help(translate!("ptx-help-format"))
+                .value_name("FORMAT")
                 .value_parser(["roff", "tex"])
                 .overrides_with_all([options::FORMAT, options::format::ROFF, options::format::TEX]),
         )
