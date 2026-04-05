@@ -310,6 +310,7 @@ pub fn uu_app() -> Command {
         .arg(
             Arg::new(options::COLUMN)
                 .long(options::COLUMN)
+                .visible_alias("columns")
                 .help(translate!("pr-help-column"))
                 .value_name("column"),
         )
