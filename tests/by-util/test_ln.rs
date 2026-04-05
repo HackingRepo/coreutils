@@ -1081,3 +1081,27 @@ fn test_ln_backup_nonexistent_rollback() {
     assert!(!at.file_exists("dst~"));
     assert!(at.file_exists("dst"));
 }
+
+#[test]
+fn test_ln_help_lists_directory() {
+    // Regression test for GNU tests/misc/getopt_vs_usage.sh: GNU ln
+    // documents -d, -F, and --directory as synonyms.
+    let result = new_ucmd!().arg("--help").succeeds();
+    let out = result.stdout_str();
+    assert!(
+        out.contains("--directory"),
+        "--help should mention --directory"
+    );
+    assert!(out.contains(" -d"), "--help should mention -d");
+    assert!(out.contains(" -F"), "--help should mention -F");
+}
+
+#[test]
+fn test_ln_directory_flag_is_accepted() {
+    // -d/-F/--directory are accepted for GNU compatibility; passing them
+    // on a regular hard link must not break normal operation.
+    let (at, mut ucmd) = at_and_ucmd!();
+    at.touch("src");
+    ucmd.args(&["-F", "src", "dst"]).succeeds();
+    assert!(at.file_exists("dst"));
+}

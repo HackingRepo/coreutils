@@ -12,6 +12,7 @@ ln-after-help = In the 1st form, create a link to TARGET with the name LINK_NAME
   can hold arbitrary text; if later resolved, a relative link is
   interpreted in relation to its parent directory.
 
+ln-help-directory = allow the superuser to attempt to hard link directories (this will probably fail due to system restrictions, even for the superuser)
 ln-help-force = remove existing destination files
 ln-help-interactive = prompt whether to remove existing destination files
 ln-help-no-dereference = treat LINK_NAME as a normal file if it is a

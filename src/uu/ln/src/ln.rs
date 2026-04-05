@@ -76,7 +76,7 @@ impl UError for LnError {
 
 mod options {
     pub const FORCE: &str = "force";
-    //pub const DIRECTORY: &str = "directory";
+    pub const DIRECTORY: &str = "directory";
     pub const INTERACTIVE: &str = "interactive";
     pub const NO_DEREFERENCE: &str = "no-dereference";
     pub const SYMBOLIC: &str = "symbolic";
@@ -152,12 +152,17 @@ pub fn uu_app() -> Command {
         .after_help(after_help)
         .arg(backup_control::arguments::backup())
         .arg(backup_control::arguments::backup_no_args())
-        /*.arg(
+        .arg(
+            // GNU ln accepts -d, -F, and --directory as synonyms. The
+            // underlying link(2) call will still fail for non-root users on
+            // most systems; we accept the flag for compatibility.
             Arg::new(options::DIRECTORY)
                 .short('d')
                 .long(options::DIRECTORY)
-                .help("allow users with appropriate privileges to attempt to make hard links to directories")
-        )*/
+                .visible_short_alias('F')
+                .help(translate!("ln-help-directory"))
+                .action(ArgAction::SetTrue),
+        )
         .arg(
             Arg::new(options::FORCE)
                 .short('f')

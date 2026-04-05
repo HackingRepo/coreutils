@@ -12,6 +12,7 @@ ln-after-help = Dans la 1ère forme, créer un lien vers CIBLE avec le nom NOM_L
   peuvent contenir du texte arbitraire ; s'ils sont résolus plus tard, un lien relatif est
   interprété en relation avec son répertoire parent.
 
+ln-help-directory = permettre au superutilisateur de créer des liens directs (hard) sur des répertoires (échouera probablement en raison de restrictions système, même pour le superutilisateur)
 ln-help-force = supprimer les fichiers de destination existants
 ln-help-interactive = demander avant de supprimer les fichiers de destination existants
 ln-help-no-dereference = traiter NOM_LIEN comme un fichier normal s'il s'agit d'un
