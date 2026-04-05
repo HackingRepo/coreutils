@@ -873,3 +873,21 @@ fn test_expand_tab_does_not_consume_next_argument() {
     new_ucmd!().args(&["-ea", test_file_path]).succeeds();
     new_ucmd!().args(&["-ea1", test_file_path]).succeeds();
 }
+
+#[test]
+fn test_help_lists_gnu_options() {
+    // Regression test for GNU tests/misc/getopt_vs_usage.sh. The long form
+    // --join-lines and the visible -f alias for -F must appear in --help.
+    let result = new_ucmd!().arg("--help").succeeds();
+    let out = result.stdout_str();
+    for needle in ["--join-lines", "--form-feed", " -f"] {
+        assert!(out.contains(needle), "--help should mention {needle}");
+    }
+}
+
+#[test]
+fn test_gnu_compat_flags_are_accepted() {
+    let (at, mut ucmd) = at_and_ucmd!();
+    at.write("file", "hello\n");
+    ucmd.args(&["-f", "--join-lines", "file"]).succeeds();
+}
