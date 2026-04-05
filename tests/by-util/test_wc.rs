@@ -945,3 +945,13 @@ fn test_posixly_correct_whitespace() {
         .succeeds()
         .stdout_is("1\n");
 }
+
+#[test]
+fn test_help_lists_debug() {
+    // Regression test for GNU tests/misc/getopt_vs_usage.sh: --debug must
+    // be visible in --help output, matching GNU wc.
+    new_ucmd!()
+        .arg("--help")
+        .succeeds()
+        .stdout_contains("--debug");
+}
