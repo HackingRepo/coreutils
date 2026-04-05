@@ -12,6 +12,7 @@ wc-help-max-line-length = print the length of the longest line
 wc-help-total = when to print a line with total counts;
   WHEN can be: auto, always, only, never
 wc-help-words = print the word counts
+wc-help-debug = print debugging information
 
 # Error messages
 wc-error-files-disabled = extra operand { $extra }

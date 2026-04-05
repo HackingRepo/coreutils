@@ -455,8 +455,8 @@ pub fn uu_app() -> Command {
         .arg(
             Arg::new(options::DEBUG)
                 .long(options::DEBUG)
-                .action(ArgAction::SetTrue)
-                .hide(true),
+                .help(translate!("wc-help-debug"))
+                .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new(ARG_FILES)
