@@ -128,6 +128,25 @@ fn test_uname_help() {
 }
 
 #[test]
+fn test_uname_help_lists_processor_and_hardware_platform() {
+    // Regression test for GNU tests/misc/getopt_vs_usage.sh: the -p/-i
+    // (and long forms) options must be visible in --help even though they
+    // always print "unknown" on Linux, matching GNU uname behavior.
+    let result = new_ucmd!().arg("--help").succeeds();
+    let out = result.stdout_str();
+    assert!(out.contains("-p"), "--help should mention -p");
+    assert!(out.contains("-i"), "--help should mention -i");
+    assert!(
+        out.contains("--processor"),
+        "--help should mention --processor"
+    );
+    assert!(
+        out.contains("--hardware-platform"),
+        "--help should mention --hardware-platform"
+    );
+}
+
+#[test]
 fn test_uname_output_for_invisible_chars() {
     // let re = regex::Regex::new("[^[[:print:]]]").unwrap(); // matches invisible (and emojis)
     let re = regex::Regex::new("[^[[:print:]]\\p{Other_Symbol}]").unwrap(); // matches invisible (not emojis)
