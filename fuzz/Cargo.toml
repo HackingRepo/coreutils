@@ -44,6 +44,7 @@ uu_tr = { path = "../src/uu/tr" }
 uu_env = { path = "../src/uu/env" }
 uu_cksum = { path = "../src/uu/cksum" }
 uu_dirname = { path = "../src/uu/dirname" }
+uu_numfmt = { path = "../src/uu/numfmt" }
 
 [[bin]]
 name = "fuzz_date"
@@ -156,5 +157,11 @@ doc = false
 [[bin]]
 name = "fuzz_dirname"
 path = "fuzz_targets/fuzz_dirname.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_numfmt"
+path = "fuzz_targets/fuzz_numfmt.rs"
 test = false
 doc = false

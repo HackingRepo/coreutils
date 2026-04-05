@@ -1977,6 +1977,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "uu_numfmt"
+version = "0.8.0"
+dependencies = [
+ "clap",
+ "fluent",
+ "memchr",
+ "thiserror",
+ "uucore",
+]
+
+[[package]]
 name = "uu_printf"
 version = "0.8.0"
 dependencies = [
@@ -2130,6 +2141,7 @@ dependencies = [
  "uu_echo",
  "uu_env",
  "uu_expr",
+ "uu_numfmt",
  "uu_printf",
  "uu_seq",
  "uu_sort",
