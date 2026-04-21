@@ -3815,6 +3815,7 @@ dependencies = [
  "indicatif",
  "libc",
  "rustc-hash",
+ "rustix",
  "tempfile",
  "thiserror 2.0.18",
  "uucore",

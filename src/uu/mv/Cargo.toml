@@ -43,6 +43,7 @@ windows-sys = { workspace = true, features = [
 
 [target.'cfg(unix)'.dependencies]
 libc = { workspace = true }
+rustix = { workspace = true, features = ["fs"] }
 
 [features]
 selinux = ["uucore/selinux"]
