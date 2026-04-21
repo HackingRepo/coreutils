@@ -7899,3 +7899,21 @@ fn test_cp_final_mode_unchanged_after_restrictive_create() {
         "dst final mode should match source & ~umask (got {mode:o})"
     );
 }
+
+// Sanity check for the `-P` happy path: a symlink source is copied as a
+// symlink, not by following it. The actual `O_NOFOLLOW` invariant for
+// issue #10017 (path swap to a symlink between lstat and open) cannot be
+// raced deterministically from a unit test; that is locked in by the
+// strace check in util/check-safe-traversal.sh, which fails if a future
+// change drops `O_NOFOLLOW` from the source open under `-P`.
+#[test]
+#[cfg(unix)]
+fn test_cp_no_dereference_copies_symlink_as_symlink() {
+    let (at, mut ucmd) = at_and_ucmd!();
+    at.write("target", "secret target contents");
+    at.symlink_file("target", "src_link");
+
+    ucmd.arg("-P").arg("src_link").arg("dst").succeeds();
+    assert!(at.symlink_exists("dst"));
+    assert!(at.read_symlink("dst").ends_with("target"));
+}
