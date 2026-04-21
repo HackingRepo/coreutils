@@ -28,6 +28,7 @@ pub(crate) fn copy_on_write(
     sparse_mode: SparseMode,
     context: &str,
     source_is_stream: bool,
+    _nofollow: bool,
 ) -> CopyResult<CopyDebug> {
     if sparse_mode != SparseMode::Auto {
         return Err(translate!("cp-error-sparse-not-supported")

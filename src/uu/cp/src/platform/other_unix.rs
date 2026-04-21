@@ -3,11 +3,10 @@
 // For the full copyright and license information, please view the LICENSE
 // file that was distributed with this source code.
 // spell-checker:ignore reflink
-use std::fs::File;
 use std::path::Path;
 
 use uucore::buf_copy;
-use uucore::safe_copy::create_dest_restrictive;
+use uucore::safe_copy::{create_dest_restrictive, open_source, safe_copy_file};
 use uucore::translate;
 
 use crate::{
@@ -23,6 +22,7 @@ pub(crate) fn copy_on_write(
     sparse_mode: SparseMode,
     context: &str,
     source_is_stream: bool,
+    nofollow: bool,
 ) -> CopyResult<CopyDebug> {
     if reflink_mode != ReflinkMode::Never {
         return Err(translate!("cp-error-reflink-not-supported")
@@ -41,8 +41,10 @@ pub(crate) fn copy_on_write(
     };
 
     if source_is_stream {
-        let mut src_file = File::open(source)?;
-        let mut dst_file = create_dest_restrictive(dest)?;
+        let mut src_file = open_source(source, nofollow)
+            .map_err(|e| CpError::IoErrContext(e, context.to_owned()))?;
+        let mut dst_file = create_dest_restrictive(dest, nofollow)
+            .map_err(|e| CpError::IoErrContext(e, context.to_owned()))?;
 
         let dest_is_stream = is_stream(&dst_file.metadata()?);
         if !dest_is_stream {
@@ -57,14 +59,10 @@ pub(crate) fn copy_on_write(
         return Ok(copy_debug);
     }
 
-    // Equivalent of fs::copy but creates dest with DEST_INITIAL_MODE rather
-    // than the default umask-derived 0o666, closing the window where another
-    // user could read/write dest before cp applies the final permissions.
-    let mut src_file =
-        File::open(source).map_err(|e| CpError::IoErrContext(e, context.to_owned()))?;
-    let mut dst_file =
-        create_dest_restrictive(dest).map_err(|e| CpError::IoErrContext(e, context.to_owned()))?;
-    std::io::copy(&mut src_file, &mut dst_file)
+    // Replacement for fs::copy: restrictive 0o600 dest mode (#10011) and
+    // optional O_NOFOLLOW on both ends (#10017). Final permissions are
+    // applied later by cp.rs::copy_attributes via set_permissions.
+    safe_copy_file(source, dest, nofollow)
         .map_err(|e| CpError::IoErrContext(e, context.to_owned()))?;
 
     Ok(copy_debug)
