@@ -921,13 +921,15 @@ impl Attributes {
         xattr: Preserve::No { explicit: false },
     };
 
-    // TODO: ownership is required if the user is root, for non-root users it's not required.
+    // xattr is intentionally NOT in DEFAULT — GNU `cp -p` only preserves
+    // mode, ownership, and timestamps. Default xattr preservation leaks
+    // capability / SELinux labels into copies and fails hard on filesystems
+    // without xattr support. See issue #9704.
     pub const DEFAULT: Self = Self {
         #[cfg(unix)]
         ownership: Preserve::Yes { required: true },
         mode: Preserve::Yes { required: true },
         timestamps: Preserve::Yes { required: true },
-        xattr: Preserve::Yes { required: true },
         ..Self::NONE
     };
 
