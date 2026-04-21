@@ -1258,15 +1258,14 @@ fn rename_file_fallback(
     #[cfg(unix)] hardlink_tracker: Option<&mut HardlinkTracker>,
     #[cfg(unix)] hardlink_scanner: Option<&HardlinkGroupScanner>,
 ) -> io::Result<()> {
-    // Remove existing target file if it exists
+    // Symlink destinations must be unlinked so the copy below does not
+    // write through them. Regular-file destinations are left in place and
+    // truncated by O_TRUNC inside the copy, avoiding an extra TOCTOU window.
     if to.is_symlink() {
         fs::remove_file(to).map_err(|err| {
             let inter_device_msg = translate!("mv-error-inter-device-move-failed", "from" => from.quote(), "to" => to.quote(), "err" => err);
             io::Error::new(err.kind(), inter_device_msg)
         })?;
-    } else if to.exists() {
-        // For non-symlinks, just remove the file without special error handling
-        fs::remove_file(to)?;
     }
 
     // Check if this file is part of a hardlink group and if so, create a hardlink instead of copying
