@@ -100,6 +100,29 @@ fn test_cp_stream_to_full() {
         .stderr_contains("No space");
 }
 
+// Regression test for the panic in cp's debug/verbose printers when the
+// stdout write fails (e.g. /dev/full).  cp should fail cleanly instead of
+// printing a Rust panic backtrace.
+#[test]
+#[cfg(target_os = "linux")]
+fn test_cp_debug_to_dev_full_no_panic() {
+    use std::fs::OpenOptions;
+
+    let (at, mut ucmd) = at_and_ucmd!();
+    at.touch("src");
+    let dev_full = OpenOptions::new().write(true).open("/dev/full").unwrap();
+
+    let result = ucmd
+        .args(&["--debug", "src", "dst"])
+        .set_stdout(dev_full)
+        .fails();
+    assert!(
+        !result.stderr_str().contains("panicked"),
+        "cp panicked on stdout write failure: {}",
+        result.stderr_str()
+    );
+}
+
 #[test]
 fn test_cp_cp() {
     let (at, mut ucmd) = at_and_ucmd!();

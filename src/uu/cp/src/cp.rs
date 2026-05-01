@@ -449,10 +449,20 @@ impl Display for SparseDebug {
 /// no hard link or symbolic link is required, and data copy is required.
 /// It prints the debug information of the offload, reflink, and sparse detection actions.
 fn show_debug(copy_debug: &CopyDebug) {
-    println!(
-        "{}",
-        translate!("cp-debug-copy-offload", "offload" => copy_debug.offload, "reflink" => copy_debug.reflink, "sparse" => copy_debug.sparse_detection)
+    // Write directly to a locked stdout so a write failure (e.g. ENOSPC on
+    // /dev/full) returns an io::Error instead of panicking inside println!.
+    let line = translate!(
+        "cp-debug-copy-offload",
+        "offload" => copy_debug.offload,
+        "reflink" => copy_debug.reflink,
+        "sparse" => copy_debug.sparse_detection,
     );
+    use std::io::Write;
+    let mut out = io::stdout().lock();
+    if writeln!(out, "{line}").is_err() {
+        // Match GNU's behavior: silently set a non-zero exit code.
+        set_exit_code(EXIT_ERR);
+    }
 }
 
 static EXIT_ERR: i32 = 1;
@@ -2203,6 +2213,9 @@ fn print_verbose_output(
 }
 
 fn print_paths(parents: bool, source: &Path, dest: &Path) {
+    use std::io::Write;
+    let mut out = io::stdout().lock();
+    let mut failed = false;
     if parents {
         // For example, if copying file `a/b/c` and its parents
         // to directory `d/`, then print
@@ -2211,11 +2224,20 @@ fn print_paths(parents: bool, source: &Path, dest: &Path) {
         //     a/b -> d/a/b
         //
         for (x, y) in aligned_ancestors(source, dest) {
-            println!("{} -> {}", x.display(), y.display());
+            if writeln!(out, "{} -> {}", x.display(), y.display()).is_err() {
+                failed = true;
+                break;
+            }
         }
     }
-
-    println!("{}", context_for(source, dest));
+    if !failed && writeln!(out, "{}", context_for(source, dest)).is_err() {
+        failed = true;
+    }
+    if failed {
+        // Match GNU's behavior: silently set a non-zero exit code instead
+        // of panicking when stdout writes fail (e.g. ENOSPC on /dev/full).
+        set_exit_code(EXIT_ERR);
+    }
 }
 
 /// Handles the copy mode for a file copy operation.
