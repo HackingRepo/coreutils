@@ -493,3 +493,22 @@ fn test_kill_signal_only_no_pid() {
         .fails()
         .stderr_contains("no process ID specified");
 }
+
+/// `kill` with a non-positive PID must not panic and must report an error
+/// (rather than implicitly broadcasting to a process group).
+#[test]
+fn test_kill_non_positive_pid_errors() {
+    new_ucmd!()
+        .arg("--")
+        .arg("0")
+        .fails()
+        .stderr_contains("No such process");
+
+    new_ucmd!()
+        .arg("-s")
+        .arg("EXIT")
+        .arg("--")
+        .arg("-1")
+        .fails()
+        .stderr_contains("No such process");
+}

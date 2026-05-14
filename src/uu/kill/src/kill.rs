@@ -6,8 +6,7 @@
 // spell-checker:ignore (ToDO) signalname pids killpg
 
 use clap::{Arg, ArgAction, Command};
-use nix::sys::signal::{self, Signal};
-use nix::unistd::Pid;
+use rustix::process::{Pid, Signal, kill_process, test_kill_process};
 use std::io::Error;
 use uucore::display::Quotable;
 use uucore::error::{FromIo, UResult, USimpleError};
@@ -74,10 +73,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
             let sig: Option<Signal> = if sig_name.is_some_and(|name| name == "EXIT") {
                 None
             } else {
-                let sig = (sig as i32)
-                    .try_into()
-                    .map_err(|e| Error::from_raw_os_error(e as i32))?;
-                Some(sig)
+                // SAFETY: sig is non-zero here (the zero/EXIT case is handled above).
+                Some(unsafe { Signal::from_raw_unchecked(sig as i32) })
             };
 
             let pids = parse_pids(&pids_or_signals)?;
@@ -252,9 +249,17 @@ fn parse_pids(pids: &[String]) -> UResult<Vec<i32>> {
 
 fn kill(sig: Option<Signal>, pids: &[i32]) {
     for &pid in pids {
-        if let Err(e) = signal::kill(Pid::from_raw(pid), sig) {
+        let result = if let Some(p) = (pid > 0).then(|| Pid::from_raw(pid).unwrap()) {
+            match sig {
+                Some(s) => kill_process(p, s),
+                None => test_kill_process(p),
+            }
+        } else {
+            Err(rustix::io::Errno::SRCH)
+        };
+        if let Err(e) = result {
             show!(
-                Error::from_raw_os_error(e as i32)
+                Error::from(e)
                     .map_err_context(|| { translate!("kill-error-sending-signal", "pid" => pid) })
             );
         }
