@@ -3,7 +3,7 @@
 // For the full copyright and license information, please view the LICENSE
 // file that was distributed with this source code.
 
-// spell-checker:ignore defg
+// spell-checker:ignore defg héllo hllo
 
 use uutests::at_and_ucmd;
 use uutests::new_ucmd;
@@ -660,4 +660,174 @@ fn test_cut_non_utf8_paths() {
         .arg(file_name)
         .succeeds()
         .stdout_only("a\tc\n1\t3\n");
+}
+
+// `0xA2 0xE3` is a valid 2-byte GB18030 character (and not valid UTF-8).
+// The encoding is detected from `LC_ALL` directly, so these tests do not
+// require the `zh_CN.gb18030` locale to be installed on the system.
+#[cfg(target_os = "linux")]
+const GB18030_LOCALE: &str = "zh_CN.gb18030";
+
+#[test]
+#[cfg(target_os = "linux")]
+#[cfg_attr(wasi_runner, ignore = "WASI: argv must be valid UTF-8")]
+fn test_gb18030_multibyte_delimiter() {
+    use std::ffi::OsString;
+    use std::os::unix::ffi::OsStringExt;
+
+    let delim = OsString::from_vec(vec![0xA2, 0xE3]);
+    // 1<d>2<d>3 -> fields 2,3 joined with `_`
+    new_ucmd!()
+        .env("LC_ALL", GB18030_LOCALE)
+        .arg("-d")
+        .arg(&delim)
+        .args(&["-f2,3", "--output-delimiter=_"])
+        .pipe_in(b"1\xA2\xE32\xA2\xE33\n".to_vec())
+        .succeeds()
+        .stdout_only("2_3\n");
+
+    // -f1,3 keeps the multibyte delimiter as the output delimiter
+    new_ucmd!()
+        .env("LC_ALL", GB18030_LOCALE)
+        .arg("-d")
+        .arg(&delim)
+        .arg("-f1,3")
+        .pipe_in(b"1\xA2\xE32\xA2\xE33\n".to_vec())
+        .succeeds()
+        .stdout_only_bytes(b"1\xA2\xE33\n");
+
+    // --complement -f1
+    new_ucmd!()
+        .env("LC_ALL", GB18030_LOCALE)
+        .arg("--complement")
+        .arg("-d")
+        .arg(&delim)
+        .arg("-f1")
+        .pipe_in(b"1\xA2\xE32\xA2\xE33\n".to_vec())
+        .succeeds()
+        .stdout_only_bytes(b"2\xA2\xE33\n");
+
+    // empty fields with a multibyte delimiter
+    new_ucmd!()
+        .env("LC_ALL", GB18030_LOCALE)
+        .arg("-d")
+        .arg(&delim)
+        .args(&["-f1-3", "--output-delimiter=:"])
+        .pipe_in(b"\xA2\xE3\xA2\xE33\n".to_vec())
+        .succeeds()
+        .stdout_only("::3\n");
+}
+
+#[test]
+#[cfg(target_os = "linux")]
+fn test_gb18030_single_byte_delimiter() {
+    use std::ffi::OsString;
+    use std::os::unix::ffi::OsStringExt;
+
+    // 0xFF is invalid in GB18030, but any single byte is a valid delimiter.
+    let delim = OsString::from_vec(vec![0xFF]);
+    new_ucmd!()
+        .env("LC_ALL", GB18030_LOCALE)
+        .arg("-d")
+        .arg(&delim)
+        .args(&["-f2,3", "--output-delimiter=_"])
+        .pipe_in(b"1\xFF2\xFF3\n".to_vec())
+        .succeeds()
+        .stdout_only("2_3\n");
+}
+
+#[test]
+#[cfg(target_os = "linux")]
+#[cfg_attr(wasi_runner, ignore = "WASI: argv must be valid UTF-8")]
+fn test_gb18030_characters() {
+    // -c1 selects the whole first (multibyte) character, -c2 the next one.
+    new_ucmd!()
+        .env("LC_ALL", GB18030_LOCALE)
+        .arg("-c1")
+        .pipe_in(b"\xA2\xE3x\n".to_vec())
+        .succeeds()
+        .stdout_only_bytes(b"\xA2\xE3\n");
+
+    new_ucmd!()
+        .env("LC_ALL", GB18030_LOCALE)
+        .arg("-c2")
+        .pipe_in(b"\xA2\xE3x\n".to_vec())
+        .succeeds()
+        .stdout_only("x\n");
+}
+
+#[test]
+#[cfg(target_os = "linux")]
+#[cfg_attr(wasi_runner, ignore = "WASI: argv must be valid UTF-8")]
+fn test_gb18030_bytes_no_split() {
+    // With -n, a multibyte character is emitted only when its last byte is
+    // selected, and it is then emitted whole.
+    new_ucmd!()
+        .env("LC_ALL", GB18030_LOCALE)
+        .args(&["-b1", "-n"])
+        .pipe_in(b"\xA2\xE3x\n".to_vec())
+        .succeeds()
+        .stdout_only("\n");
+
+    new_ucmd!()
+        .env("LC_ALL", GB18030_LOCALE)
+        .args(&["-b2", "-n"])
+        .pipe_in(b"\xA2\xE3x\n".to_vec())
+        .succeeds()
+        .stdout_only_bytes(b"\xA2\xE3\n");
+}
+
+// In a UTF-8 locale `-c` cuts whole characters too (this is the common path,
+// but the test harness runs under `LC_ALL=C` so it must be set explicitly).
+// `h\xc3\xa9llo` is "héllo": 'h', 'é' (2 bytes), 'l', 'l', 'o'.
+#[test]
+#[cfg(target_os = "linux")]
+#[cfg_attr(wasi_runner, ignore = "WASI: argv must be valid UTF-8")]
+fn test_utf8_characters() {
+    // -c2 selects the whole 2-byte 'é', not a single byte of it.
+    new_ucmd!()
+        .env("LC_ALL", "en_US.UTF-8")
+        .arg("-c2")
+        .pipe_in("héllo\n".as_bytes().to_vec())
+        .succeeds()
+        .stdout_only("é\n");
+
+    // Two ranges joined with an output delimiter, one of them spanning 'é'.
+    new_ucmd!()
+        .env("LC_ALL", "en_US.UTF-8")
+        .args(&["-c1,3", "--output-delimiter=_"])
+        .pipe_in("héllo\n".as_bytes().to_vec())
+        .succeeds()
+        .stdout_only("h_l\n");
+
+    // --complement drops the whole 'é', keeping the rest.
+    new_ucmd!()
+        .env("LC_ALL", "en_US.UTF-8")
+        .args(&["--complement", "-c2"])
+        .pipe_in("héllo\n".as_bytes().to_vec())
+        .succeeds()
+        .stdout_only("hllo\n");
+}
+
+// Multiple ranges and --complement in char mode for a non-UTF-8 multibyte
+// locale, exercising the per-range output-delimiter logic in `cut_chars`.
+#[test]
+#[cfg(target_os = "linux")]
+#[cfg_attr(wasi_runner, ignore = "WASI: argv must be valid UTF-8")]
+fn test_gb18030_characters_ranges() {
+    // -c1,3 keeps the first and third characters joined with `_`.
+    new_ucmd!()
+        .env("LC_ALL", GB18030_LOCALE)
+        .args(&["-c1,3", "--output-delimiter=_"])
+        .pipe_in(b"\xA2\xE3x\xA2\xE3\n".to_vec())
+        .succeeds()
+        .stdout_only_bytes(b"\xA2\xE3_\xA2\xE3\n");
+
+    // --complement -c1 drops the leading multibyte character.
+    new_ucmd!()
+        .env("LC_ALL", GB18030_LOCALE)
+        .args(&["--complement", "-c1"])
+        .pipe_in(b"\xA2\xE3x\xA2\xE3\n".to_vec())
+        .succeeds()
+        .stdout_only_bytes(b"x\xA2\xE3\n");
 }
