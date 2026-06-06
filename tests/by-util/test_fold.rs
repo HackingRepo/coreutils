@@ -889,6 +889,22 @@ fn test_bytewise_carriage_return_is_not_word_boundary() {
         .succeeds()
         .stdout_is("fizz\rb\nuzz\rfi\nzzbuzz"); // spell-checker:disable-line
 }
+
+#[test]
+fn test_continue_after_missing_file() {
+    // Like GNU, fold reports the missing file but keeps processing the others,
+    // exiting with code 1. Matches GNU's tests/fold/multiple-files.sh.
+    let ts = TestScenario::new(util_name!());
+    ts.fixtures.write("file1", "a\n");
+    ts.fixtures.write("file2", "b\n");
+
+    ts.ucmd()
+        .args(&["file1", "missing", "file2"])
+        .fails_with_code(1)
+        .stdout_is("a\nb\n")
+        .stderr_is("fold: missing: No such file or directory\n");
+}
+
 #[test]
 fn test_obsolete_syntax() {
     new_ucmd!()
