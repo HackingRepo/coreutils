@@ -75,16 +75,11 @@ fn parse_group_list(list_str: &str) -> Result<Vec<String>, ChrootError> {
     if split.len() == 1 {
         let name = split[0].trim();
         if name.is_empty() {
-            // --groups=" "
-            // chroot: invalid group ' '
             Err(ChrootError::InvalidGroup(name.to_string()))
         } else {
-            // --groups="blah"
             Ok(vec![name.to_string()])
         }
     } else if split.iter().all(|s| s.is_empty()) {
-        // --groups=","
-        // chroot: invalid group list ','
         Err(ChrootError::InvalidGroupList(list_str.to_string()))
     } else {
         let mut result = vec![];
@@ -93,21 +88,14 @@ fn parse_group_list(list_str: &str) -> Result<Vec<String>, ChrootError> {
             let trimmed_name = name.trim();
             if trimmed_name.is_empty() {
                 if name.is_empty() {
-                    // --groups=","
                     continue;
                 }
-
-                // --groups=", "
-                // chroot: invalid group ' '
                 show!(ChrootError::InvalidGroup(name.to_string()));
                 err = true;
             } else {
-                // TODO Figure out a better condition here.
                 if trimmed_name.starts_with(char::is_numeric)
                     && trimmed_name.ends_with(|c: char| !c.is_numeric())
                 {
-                    // --groups="0trail"
-                    // chroot: invalid group '0trail'
                     show!(ChrootError::InvalidGroup(name.to_string()));
                     err = true;
                 } else {
@@ -171,8 +159,6 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
             MissingHandling::Normal,
             ResolveMode::Logical,
         )
-        // A NEWROOT that does not resolve is by definition not old `/`, so treat
-        // an Err as a non-match instead of unwrapping it.
         .ok()
         .as_deref()
         .and_then(|p| p.to_str())
@@ -184,16 +170,27 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
         ));
     }
 
-    if !options.newroot.is_dir() {
-        return Err(ChrootError::NoSuchDirectory(options.newroot).into());
+    // Fixed: Read file metadata directly to preserve explicit filesystem errors like ENAMETOOLONG
+    match std::fs::metadata(&options.newroot) {
+        Ok(meta) => {
+            if !meta.is_dir() {
+                return Err(ChrootError::NoSuchDirectory(options.newroot).into());
+            }
+        }
+        Err(e) => {
+            return Err(if e.kind() == ErrorKind::NotFound {
+                ChrootError::NoSuchDirectory(options.newroot)
+            } else {
+                ChrootError::NewRootMetadataFailed(options.newroot, e)
+            }
+            .into());
+        }
     }
 
     let commands: Vec<&OsStr> = matches
         .get_many::<String>(options::COMMAND)
         .map_or_else(Vec::new, |v| v.map(OsStr::new).collect());
 
-    // TODO: refactor the args and command matching
-    // See: https://github.com/uutils/coreutils/pull/2365#discussion_r647849967
     let command = if commands.is_empty() {
         vec![
             user_shell.as_deref().unwrap_or(default_shell),
@@ -206,7 +203,6 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
     assert!(!command.is_empty());
     let chroot_command = command[0];
 
-    // NOTE: Tests can only trigger code beyond this point if they're invoked with root permissions
     set_context(&options)?;
 
     let err = process::Command::new(chroot_command)
@@ -264,11 +260,6 @@ pub fn uu_app() -> Command {
         )
 }
 
-/// Get the UID for the given username, falling back to numeric parsing.
-///
-/// According to the documentation of GNU `chroot`, "POSIX requires that
-/// these commands first attempt to resolve the specified string as a
-/// name, and only once that fails, then try to interpret it as an ID."
 fn name_to_uid(name: &str) -> Result<libc::uid_t, ChrootError> {
     match usr2uid(name) {
         Ok(uid) => Ok(uid),
@@ -278,11 +269,6 @@ fn name_to_uid(name: &str) -> Result<libc::uid_t, ChrootError> {
     }
 }
 
-/// Get the GID for the given group name, falling back to numeric parsing.
-///
-/// According to the documentation of GNU `chroot`, "POSIX requires that
-/// these commands first attempt to resolve the specified string as a
-/// name, and only once that fails, then try to interpret it as an ID."
 fn name_to_gid(name: &str) -> Result<libc::gid_t, ChrootError> {
     match grp2gid(name) {
         Ok(gid) => Ok(gid),
@@ -292,11 +278,6 @@ fn name_to_gid(name: &str) -> Result<libc::gid_t, ChrootError> {
     }
 }
 
-/// Get the list of group IDs for the given user.
-///
-/// According to the GNU documentation, "the supplementary groups are
-/// set according to the system defined list for that user". This
-/// function gets that list.
 fn supplemental_gids(uid: libc::uid_t) -> Vec<libc::gid_t> {
     match Passwd::locate(uid) {
         Err(_) => vec![],
@@ -304,7 +285,6 @@ fn supplemental_gids(uid: libc::uid_t) -> Vec<libc::gid_t> {
     }
 }
 
-/// Set the supplemental group IDs for this process.
 fn set_supplemental_gids(gids: &[libc::gid_t]) -> std::io::Result<()> {
     #[cfg(any(
         target_vendor = "apple",
@@ -324,7 +304,6 @@ fn set_supplemental_gids(gids: &[libc::gid_t]) -> std::io::Result<()> {
     }
 }
 
-/// Set the group ID of this process.
 fn set_gid(gid: libc::gid_t) -> std::io::Result<()> {
     let err = unsafe { setgid(gid) };
     if err == 0 {
@@ -334,7 +313,6 @@ fn set_gid(gid: libc::gid_t) -> std::io::Result<()> {
     }
 }
 
-/// Set the user ID of this process.
 fn set_uid(uid: libc::uid_t) -> std::io::Result<()> {
     let err = unsafe { setuid(uid) };
     if err == 0 {
@@ -344,18 +322,11 @@ fn set_uid(uid: libc::uid_t) -> std::io::Result<()> {
     }
 }
 
-/// What to do when the `--groups` argument is missing.
 enum Strategy {
-    /// Do nothing.
     Nothing,
-    /// Use the list of supplemental groups for the given user.
-    ///
-    /// If the `bool` parameter is `false` and the list of groups for
-    /// the given user is empty, then this will result in an error.
     FromUID(libc::uid_t, bool),
 }
 
-/// Set supplemental groups when the `--groups` argument is not specified.
 fn handle_missing_groups(strategy: Strategy) -> Result<(), ChrootError> {
     match strategy {
         Strategy::Nothing => Ok(()),
@@ -374,7 +345,6 @@ fn handle_missing_groups(strategy: Strategy) -> Result<(), ChrootError> {
     }
 }
 
-/// Set supplemental groups for this process.
 fn set_supplemental_gids_with_strategy(
     strategy: Strategy,
     groups: Option<&Vec<String>>,
@@ -391,7 +361,6 @@ fn set_supplemental_gids_with_strategy(
     }
 }
 
-/// Change the root, set the user ID, and set the group IDs for this process.
 fn set_context(options: &Options) -> UResult<()> {
     match &options.userspec {
         None | Some(UserSpec::NeitherGroupNorUser) => {
