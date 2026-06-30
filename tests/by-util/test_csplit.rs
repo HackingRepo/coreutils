@@ -931,8 +931,7 @@ fn test_skip_to_no_match5() {
     let (at, mut ucmd) = at_and_ucmd!();
     ucmd.args(&["numbers50.txt", "%nope%", "{*}"])
         .succeeds()
-        .no_stderr()
-        .no_stdout();
+        .no_output();
 
     let count = glob(&at.plus_as_string("xx*"))
         .expect("counting splits")
@@ -1582,4 +1581,37 @@ fn test_write_error_dev_full_keep_files() {
 
     assert!(at.file_exists("xx00"));
     assert_eq!(at.read("xx00"), "1\n");
+}
+
+#[test]
+fn test_massive_suffix_format_width_error() {
+    new_ucmd!()
+        .args(&["numbers50.txt", "-f", "xx", "-b", "%65536d", "10"])
+        .fails()
+        .stderr_contains("invalid suffix format");
+
+    new_ucmd!()
+        .args(&[
+            "numbers50.txt",
+            "-f",
+            "xx",
+            "-b",
+            "%9999999999999999999d",
+            "10",
+        ])
+        .fails()
+        .stderr_contains("invalid suffix format");
+}
+
+#[test]
+fn test_massive_digits_width_error() {
+    new_ucmd!()
+        .args(&["numbers50.txt", "-n", "65536", "10"])
+        .fails()
+        .stderr_contains("invalid suffix format");
+
+    new_ucmd!()
+        .args(&["numbers50.txt", "-n", "9999999999999999999", "10"])
+        .fails()
+        .stderr_contains("invalid number");
 }
