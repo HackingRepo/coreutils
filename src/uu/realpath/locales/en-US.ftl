@@ -12,6 +12,8 @@ realpath-help-canonicalize-existing = canonicalize by following every symlink in
 realpath-help-canonicalize-missing = canonicalize by following every symlink in every component of the given name recursively, without requirements on components existence
 realpath-help-relative-to = print the resolved path relative to DIR
 realpath-help-relative-base = print absolute paths unless paths below DIR
+realpath-file-name-too-long = File name too long
 
 # Error messages
 realpath-invalid-empty-operand = invalid operand: empty string
+realpath-file-name-too-long = File name too long
